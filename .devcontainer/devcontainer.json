@@ -1,0 +1,43 @@
+{
+    "name": "ROS 2 Development Container",
+    "privileged": true,
+    "remoteUser": "seamate",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            "USERNAME": "seamate"
+        }
+    },
+    "workspaceFolder": "/home/ws",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/home/ws,type=bind",
+    "customizations": {
+        "vscode": {
+            "extensions":[
+				"ms-vscode.cpptools",
+				"ms-vscode.cpptools-themes",
+				"twxs.cmake",
+				"donjayamanne.python-extension-pack",
+				"eamodio.gitlens",
+				"ms-iot.vscode-ros",
+				"mhutchie.git-graph"
+			]
+        }
+    },
+    // "containerEnv": {
+    //     "DISPLAY": "localhost:0",
+    //     "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST",
+    //     "ROS_DOMAIN_ID": "42"
+    // },
+    // "runArgs": [
+    //     "--net=host",
+    //     "-e", "DISPLAY=${env:DISPLAY}"
+    // ],
+    "mounts": [
+        // "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
+        // "source=/dev/dri,target=/dev/dri,type=bind,consistency=cached",
+        "source=${localWorkspaceFolder}/cache/iron/build,target=/home/ws/build,type=bind",
+        "source=${localWorkspaceFolder}/cache/iron/install,target=/home/ws/install,type=bind",
+        "source=${localWorkspaceFolder}/cache/iron/log,target=/home/ws/log,type=bind"
+    ],
+    "postCreateCommand": "sudo rosdep update && sudo rosdep install --from-paths . --ignore-src -y"
+}
