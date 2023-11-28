@@ -39,5 +39,5 @@
     //     "source=${localWorkspaceFolder}/cache/iron/install,target=/home/ws/install,type=bind",
     //     "source=${localWorkspaceFolder}/cache/iron/log,target=/home/ws/log,type=bind"
     // ],
-    "postCreateCommand": "sudo rosdep update && sudo rosdep install --from-paths src --ignore-src -y"
+    "postCreateCommand": "bash .devcontainer/env-setup.sh"
 }
