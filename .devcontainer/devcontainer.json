@@ -32,12 +32,12 @@
     //     "--net=host",
     //     "-e", "DISPLAY=${env:DISPLAY}"
     // ],
-    "mounts": [
-        // "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
-        // "source=/dev/dri,target=/dev/dri,type=bind,consistency=cached",
-        "source=${localWorkspaceFolder}/cache/iron/build,target=/home/ws/build,type=bind",
-        "source=${localWorkspaceFolder}/cache/iron/install,target=/home/ws/install,type=bind",
-        "source=${localWorkspaceFolder}/cache/iron/log,target=/home/ws/log,type=bind"
-    ],
+    // "mounts": [
+    //     // "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
+    //     // "source=/dev/dri,target=/dev/dri,type=bind,consistency=cached",
+    //     "source=${localWorkspaceFolder}/cache/iron/build,target=/home/ws/build,type=bind",
+    //     "source=${localWorkspaceFolder}/cache/iron/install,target=/home/ws/install,type=bind",
+    //     "source=${localWorkspaceFolder}/cache/iron/log,target=/home/ws/log,type=bind"
+    // ],
     "postCreateCommand": "sudo rosdep update && sudo rosdep install --from-paths src --ignore-src -y"
 }
