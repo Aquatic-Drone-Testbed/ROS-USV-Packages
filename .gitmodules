@@ -2,3 +2,7 @@
 	path = src/examples
 	url = https://github.com/ros2/examples
 	branch = iron
+[submodule "src/ros_tutorials"]
+	path = src/ros_tutorials
+	url = https://github.com/ros/ros_tutorials.git
+	branch = iron
