@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
-sudo rosdep update
-sudo rosdep install --from-paths src --ignore-src -y
+rosdep update
+rosdep install -i --from-path src --rosdistro iron -y
 
 # Uncomment below lines to install ROS turtle tutorial after creating dev container
 # sudo apt update
