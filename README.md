@@ -1,5 +1,6 @@
 # ROS-demo
-This repository can be used to create a vscode-docker ROS2 dev environment on any host OS
+This repository can be used to create a vscode-docker ROS2 Humble dev environment on any host OS.  
+Environment setup is based on [ROS2 Community Guide](https://docs.ros.org/en/humble/How-To-Guides/Setup-ROS-2-with-VSCode-and-Docker-Container.html?highlight=vscode)  
 
 ## Installation
 1. Install Docker
