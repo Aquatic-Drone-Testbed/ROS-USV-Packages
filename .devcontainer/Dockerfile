@@ -1,4 +1,4 @@
-FROM ros:iron
+FROM ros:humble
 ARG USERNAME=seamate
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
