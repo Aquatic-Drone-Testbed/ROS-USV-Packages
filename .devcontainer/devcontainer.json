@@ -13,13 +13,11 @@
     "customizations": {
         "vscode": {
             "extensions":[
-				"ms-vscode.cpptools",
-				"ms-vscode.cpptools-themes",
-				"twxs.cmake",
+                "ms-vscode.cpptools-extension-pack",
 				"donjayamanne.python-extension-pack",
 				"eamodio.gitlens",
 				"ms-iot.vscode-ros",
-				"mhutchie.git-graph"
+				"mhutchie.git-graph",
 			]
         }
     },
