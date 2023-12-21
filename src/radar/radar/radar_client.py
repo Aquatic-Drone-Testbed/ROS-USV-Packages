@@ -11,7 +11,7 @@ def main():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((HOST, PORT))
         s.sendall(rd_msg_tx_control)
-        data = s.recv(1024)
+        data = s.recv(2048)
     print('Received', repr(data))
 
 
