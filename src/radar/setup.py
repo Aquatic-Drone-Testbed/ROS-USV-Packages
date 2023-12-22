@@ -20,8 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'radar_client = radar.radar_client:main',
-            'radar_server = radar.radar_server:main',
+            'control = radar.control:main',
+            'server = radar.server:main',
+            'mcastrecv = radar.mcastrecv:main',
         ],
     },
 )

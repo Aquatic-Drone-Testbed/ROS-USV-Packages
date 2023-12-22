@@ -21,6 +21,7 @@
 			]
         }
     },
+    "appPort": ["50007:50007"],
     // "containerEnv": {
     //     "DISPLAY": "localhost:0",
     //     "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST",
