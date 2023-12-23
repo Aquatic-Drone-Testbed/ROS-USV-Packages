@@ -21,14 +21,15 @@
 			]
         }
     },
+    "appPort": ["50007:50007/udp"],
     // "containerEnv": {
     //     "DISPLAY": "localhost:0",
     //     "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST",
     //     "ROS_DOMAIN_ID": "42"
     // },
     // "runArgs": [
-    //     "--net=host",
-    //     "-e", "DISPLAY=${env:DISPLAY}"
+        // "--net=host",
+        // "-e", "DISPLAY=${env:DISPLAY}"
     // ],
     // "mounts": [
     //     // "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
