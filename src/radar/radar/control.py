@@ -6,8 +6,9 @@ def main():
                                0x01,  # Control value at offset 4 : 0 - off, 1 - on
                                0x00, 0x00, 0x00])
     message = b'ping'
+    # message = rd_msg_tx_control
     
-    HOST = 'localhost'        # The remote host
+    HOST = '192.168.1.91'        # The remote host
     PORT = 50007              # The same port as used by the server
     SERVER = (HOST, PORT)
     with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as s:
