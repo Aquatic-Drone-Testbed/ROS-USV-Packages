@@ -1,8 +1,9 @@
 # ping pong client
 import socket
+import struct
 
-HOST = '192.168.1.91'        # The remote host
-PORT = 50007                 # The same port as used by the server
+HOST = '192.168.1.117'        # The remote host
+PORT = 2575                 # The same port as used by the server
 RADAR_ADDR = (HOST, PORT)
 
 rd_msg_tx_on = bytes([0x10, 0x00, 0x28, 0x00,
@@ -27,14 +28,14 @@ rd_msg_set_range = bytes([0x01, 0x01, 0x28, 0x00, 0x00,
                           0x00, 0x00])
 
 def main():
-    message = b'ping'
-    # message = rd_msg_tx_control
+    # message = b'ping'
+    message = rd_msg_tx_on
     
     with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as m_comm_socket:
         m_comm_socket.sendto(message, RADAR_ADDR)
         print(f'Sent {message} to {RADAR_ADDR}')
-        data, server_addr = m_comm_socket.recvfrom(1024)
-        print(f'Received {data} from {server_addr}')
+        # data, server_addr = m_comm_socket.recvfrom(1024)
+        # print(f'Received {data} from {server_addr}')
 
 
 if __name__ == '__main__':

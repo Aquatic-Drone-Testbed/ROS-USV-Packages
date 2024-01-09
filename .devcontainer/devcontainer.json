@@ -21,7 +21,7 @@
 			]
         }
     },
-    "appPort": ["50007:50007/udp", "20000:20000/udp", "20000:20000/tcp"],
+    "appPort": ["2575:2575/udp", "5800:5800/udp", "54:54/udp", "20000:20000/udp", "20000:20000/tcp"],
     // "containerEnv": {
     //     "DISPLAY": "localhost:0",
     //     "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST",
