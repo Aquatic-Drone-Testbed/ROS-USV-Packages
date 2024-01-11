@@ -20,7 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'control = radar.control:main',
+            'on = radar.on:main',
+            'off = radar.off:main',
+            'alive = radar.alive:main',
             'server = radar.server:main',
             'mcastrecv = radar.mcastrecv:main',
         ],

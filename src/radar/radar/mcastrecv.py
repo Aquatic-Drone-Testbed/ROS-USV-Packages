@@ -43,7 +43,9 @@ def main():
             
             radar_ip = struct.unpack('4B', struct.pack('I', socket.ntohl(rRec.radar_ip)))
             radar_port = struct.unpack('2H', struct.pack('I', socket.ntohl(rRec.radar_port)))
+            
             print(rRec)
+            print(socket.ntohl(rRec.radar_port))
             print(f'data_addr = {data_ip}:{data_port}')
             print(f'radar_addr = {radar_ip}:{radar_port}')
 

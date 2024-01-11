@@ -1,6 +1,6 @@
 # ping pong client
 import socket
-import struct
+import time
 
 HOST = '192.168.1.117'        # The remote host
 PORT = 2575                 # The same port as used by the server
@@ -27,15 +27,24 @@ rd_msg_set_range = bytes([0x01, 0x01, 0x28, 0x00, 0x00,
                           0x0f,  # Quantum range index at pos 5
                           0x00, 0x00])
 
+def transmit_command(s, command):
+    s.sendto(command, RADAR_ADDR)
+    print(f'Sent {len(command)} bytes to {RADAR_ADDR}')
+
+
 def main():
-    # message = b'ping'
-    message = rd_msg_tx_on
-    
     with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as m_comm_socket:
-        m_comm_socket.sendto(message, RADAR_ADDR)
-        print(f'Sent {message} to {RADAR_ADDR}')
-        # data, server_addr = m_comm_socket.recvfrom(1024)
-        # print(f'Received {data} from {server_addr}')
+        m_comm_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        
+        i = 0
+        while True:
+            if i%5 == 0:
+                transmit_command(m_comm_socket, rd_msg_5s)
+            else:
+                transmit_command(m_comm_socket, stay_alive_1sec)
+
+            time.sleep(1)
+            i += 1
 
 
 if __name__ == '__main__':
