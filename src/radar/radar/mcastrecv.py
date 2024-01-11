@@ -30,6 +30,7 @@ def main():
             # print('waiting to receive message')
             data, senderaddr = sock.recvfrom(1024)
             # print(f'received {len(data)} bytes from {senderaddr}')
+            # print(data)
             if len(data) != 36:
                 continue
             
@@ -37,10 +38,14 @@ def main():
             if rRec.model_id != 40: continue
             
             print('RaymarineLocate received RadarReport')
-            ip_addr = struct.unpack('>4B', struct.pack('>I', socket.ntohl(rRec.radar_ip)))
-            port = struct.unpack('>2H', struct.pack('>I', socket.ntohl(rRec.radar_port)))
+            data_ip = struct.unpack('4B', struct.pack('I', socket.ntohl(rRec.data_ip)))
+            data_port = struct.unpack('2H', struct.pack('I', socket.ntohl(rRec.data_port)))
+            
+            radar_ip = struct.unpack('4B', struct.pack('I', socket.ntohl(rRec.radar_ip)))
+            radar_port = struct.unpack('2H', struct.pack('I', socket.ntohl(rRec.radar_port)))
             print(rRec)
-            print(f'radar_addr = {ip_addr}:{port}')
+            print(f'data_addr = {data_ip}:{data_port}')
+            print(f'radar_addr = {radar_ip}:{radar_port}')
 
             # print(f'sending acknowledgement to {senderaddr}')
             # sock.sendto(bytearray("ack", "utf-8"), senderaddr)
