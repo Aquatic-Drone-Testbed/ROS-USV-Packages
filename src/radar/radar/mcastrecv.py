@@ -2,6 +2,10 @@
 
 import socket
 import struct
+from collections import namedtuple
+
+LocationInfoBlock = namedtuple('LocationInfoBlock', 
+                               'field1 field2 model_id field3 field4 field5 field6 data_ip data_port radar_ip radar_port')
 
 def main():
     MULTICAST_GROUP = '224.0.0.1'
@@ -23,14 +27,24 @@ def main():
         
         # Receive/respond loop
         while True:
-            print('waiting to receive message')
+            # print('waiting to receive message')
             data, senderaddr = sock.recvfrom(1024)
+            # print(f'received {len(data)} bytes from {senderaddr}')
+            if len(data) != 36:
+                continue
+            
+            rRec = LocationInfoBlock._make(struct.unpack('!IIBBHIIIIII', data))
+            if rRec.model_id != 40: continue
+            
+            print('RaymarineLocate received RadarReport')
+            ip_addr = struct.unpack('>4B', struct.pack('>I', socket.ntohl(rRec.radar_ip)))
+            port = struct.unpack('>2H', struct.pack('>I', socket.ntohl(rRec.radar_port)))
+            print(rRec)
+            print(f'radar_addr = {ip_addr}:{port}')
 
-            print(f'received {len(data)} bytes from {senderaddr}')
-            print(data)
-
-            print(f'sending acknowledgement to {senderaddr}')
-            sock.sendto(bytearray("ack", "utf-8"), senderaddr)
+            # print(f'sending acknowledgement to {senderaddr}')
+            # sock.sendto(bytearray("ack", "utf-8"), senderaddr)
+            print()
 
 
 if __name__ == '__main__':
