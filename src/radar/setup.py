@@ -23,6 +23,7 @@ setup(
             'on = radar.on:main',
             'off = radar.off:main',
             'alive = radar.alive:main',
+            'receive = radar.receive:main',
             'server = radar.server:main',
             'mcastrecv = radar.mcastrecv:main',
         ],

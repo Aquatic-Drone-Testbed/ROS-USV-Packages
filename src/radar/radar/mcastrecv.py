@@ -3,6 +3,7 @@
 import socket
 import struct
 from collections import namedtuple
+import logging
 
 LocationInfoBlock = namedtuple('LocationInfoBlock', 
                                'field1 field2 model_id field3 field4 field5 field6 data_ip data_port radar_ip radar_port')
@@ -29,29 +30,28 @@ def main():
         while True:
             # print('waiting to receive message')
             data, senderaddr = sock.recvfrom(1024)
-            # print(f'received {len(data)} bytes from {senderaddr}')
-            # print(data)
+            logging.debug(f'received {len(data)} bytes from {senderaddr}')
+            logging.debug(data)
             if len(data) != 36:
                 continue
             
             rRec = LocationInfoBlock._make(struct.unpack('!IIBBHIIIIII', data))
             if rRec.model_id != 40: continue
             
-            print('RaymarineLocate received RadarReport')
+            logging.info('RaymarineLocate received RadarReport')
             data_ip = struct.unpack('4B', struct.pack('I', socket.ntohl(rRec.data_ip)))
             data_port = struct.unpack('2H', struct.pack('I', socket.ntohl(rRec.data_port)))
             
             radar_ip = struct.unpack('4B', struct.pack('I', socket.ntohl(rRec.radar_ip)))
             radar_port = struct.unpack('2H', struct.pack('I', socket.ntohl(rRec.radar_port)))
             
-            print(rRec)
-            print(socket.ntohl(rRec.radar_port))
-            print(f'data_addr = {data_ip}:{data_port}')
-            print(f'radar_addr = {radar_ip}:{radar_port}')
+            logging.debug(rRec)
+            logging.debug(socket.ntohl(rRec.radar_port))
+            logging.debug(f'data_addr = {data_ip}:{data_port}')
+            logging.debug(f'radar_addr = {radar_ip}:{radar_port}')
 
             # print(f'sending acknowledgement to {senderaddr}')
             # sock.sendto(bytearray("ack", "utf-8"), senderaddr)
-            print()
 
 
 if __name__ == '__main__':

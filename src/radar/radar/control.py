@@ -1,10 +1,14 @@
-# ping pong client
 import socket
-import time
+import logging
+
+logging.basicConfig(level=logging.INFO) # Uncomment to enable info logging
+# logging.basicConfig(level=logging.DEBUG) # Uncomment to enable debug logging
 
 HOST = '192.168.1.117'        # The remote host
 PORT = 2575                 # The same port as used by the server
 RADAR_ADDR = (HOST, PORT)
+
+TIMEOUT_IN_SECONDS = 0.25
 
 rd_msg_tx_on = bytes([0x10, 0x00, 0x28, 0x00,
                       0x01,  # Control value at offset 4 : 0 - off, 1 - on
@@ -27,25 +31,21 @@ rd_msg_set_range = bytes([0x01, 0x01, 0x28, 0x00, 0x00,
                           0x0f,  # Quantum range index at pos 5
                           0x00, 0x00])
 
-def transmit_command(s, command):
+def transmit_command(s: socket, command: bytes):
     s.sendto(command, RADAR_ADDR)
-    print(f'Sent {len(command)} bytes to {RADAR_ADDR}')
+    logging.debug(f'Sent {len(command)} bytes to {RADAR_ADDR}')
 
+def radar_stay_alive(s: socket):
+    transmit_command(s, stay_alive_1sec)
+    if (radar_stay_alive.counter == 0): transmit_command(s, rd_msg_5s)
+    radar_stay_alive.counter = (radar_stay_alive.counter + 1)%5
+    logging.debug(f'Sent stay alive command')
+radar_stay_alive.counter = 0
 
-def main():
-    with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as m_comm_socket:
-        m_comm_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        
-        i = 0
-        while True:
-            if i%5 == 0:
-                transmit_command(m_comm_socket, rd_msg_5s)
-            else:
-                transmit_command(m_comm_socket, stay_alive_1sec)
+def radar_tx_on(s: socket):
+    transmit_command(s, rd_msg_tx_on)
+    logging.debug(f'Sent tx on command')
 
-            time.sleep(1)
-            i += 1
-
-
-if __name__ == '__main__':
-    main()
+def radar_tx_off(s: socket):
+    transmit_command(s, rd_msg_tx_off)
+    logging.debug(f'Sent tx off command')
