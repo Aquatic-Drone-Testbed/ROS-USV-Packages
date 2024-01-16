@@ -12,6 +12,7 @@ def main():
         
         while True:
             ready = select.select([m_comm_socket], [], [], control.TIMEOUT_IN_SECONDS)
+            logging.debug(f'{ready=}')
             if ready[0]:
                 data, addr = m_comm_socket.recvfrom(2048)
                 logging.info(f'received {len(data)} bytes')
