@@ -5,6 +5,8 @@ import struct
 from collections import namedtuple
 import logging
 
+logging.basicConfig(level=logging.DEBUG)
+
 LocationInfoBlock = namedtuple('LocationInfoBlock', 
                                'field1 field2 model_id field3 field4 field5 field6 data_ip data_port radar_ip radar_port')
 
