@@ -6,6 +6,7 @@ import logging
 def main():
     with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as m_comm_socket:
         m_comm_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        logging.info(f'initialized {m_comm_socket=}')
         control.radar_tx_on(m_comm_socket)
         logging.info(f'Turn on radar')
 

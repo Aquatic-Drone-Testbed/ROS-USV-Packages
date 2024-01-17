@@ -9,6 +9,9 @@ def main():
     with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as m_comm_socket:
         m_comm_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         m_comm_socket.setblocking(0) # non-blocking socket
+        logging.info(f'initialized {m_comm_socket=}')
+        
+        control.radar_stay_alive(m_comm_socket)
         
         while True:
             ready = select.select([m_comm_socket], [], [], control.TIMEOUT_IN_SECONDS)
