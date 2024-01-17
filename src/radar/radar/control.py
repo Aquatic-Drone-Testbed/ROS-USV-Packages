@@ -8,7 +8,7 @@ HOST = '192.168.1.117'        # The remote host
 PORT = 2575                 # The same port as used by the server
 RADAR_ADDR = (HOST, PORT)
 
-TIMEOUT_IN_SECONDS = 0.25
+TIMEOUT_IN_SECONDS = 1
 
 rd_msg_tx_on = bytes([0x10, 0x00, 0x28, 0x00,
                       0x01,  # Control value at offset 4 : 0 - off, 1 - on
