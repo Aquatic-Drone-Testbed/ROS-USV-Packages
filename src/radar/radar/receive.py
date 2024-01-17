@@ -18,7 +18,7 @@ def main():
             logging.debug(f'{ready=}')
             if ready[0]:
                 data, addr = m_comm_socket.recvfrom(2048)
-                logging.info(f'received {len(data)} bytes')
+                logging.info(f'received {len(data)} bytes from {addr}')
                 logging.info(f'{data}')
             control.radar_stay_alive(m_comm_socket)
 
