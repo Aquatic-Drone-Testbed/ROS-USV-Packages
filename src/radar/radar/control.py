@@ -1,8 +1,8 @@
 import socket
 import logging
 
-# logging.basicConfig(level=logging.INFO) # Uncomment to enable info logging
-logging.basicConfig(level=logging.DEBUG) # Uncomment to enable debug logging
+logging.basicConfig(level=logging.INFO) # Uncomment to enable info logging
+# logging.basicConfig(level=logging.DEBUG) # Uncomment to enable debug logging
 
 HOST = '192.168.1.117'        # The remote host
 PORT = 2575                 # The same port as used by the server

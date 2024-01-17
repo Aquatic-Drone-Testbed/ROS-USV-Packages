@@ -3,6 +3,18 @@ import socket
 import select
 import radar.control as control
 import logging
+from threading import Thread
+import time
+
+def receive(s: socket):
+    while True:
+        ready = select.select([s], [], [], control.TIMEOUT_IN_SECONDS)
+        logging.debug(f'{ready=}')
+        if ready[0]:
+            data, addr = s.recvfrom(2048)
+            logging.info(f'received {len(data)} bytes from {addr}')
+            logging.info(f'{data}')
+        control.radar_stay_alive(s)
 
 def main():
     logging.info(f'Run radar receive')
@@ -12,15 +24,12 @@ def main():
         logging.info(f'initialized {m_comm_socket=}')
         
         control.radar_stay_alive(m_comm_socket)
-        
-        while True:
-            ready = select.select([m_comm_socket], [], [], control.TIMEOUT_IN_SECONDS)
-            logging.debug(f'{ready=}')
-            if ready[0]:
-                data, addr = m_comm_socket.recvfrom(2048)
-                logging.info(f'received {len(data)} bytes from {addr}')
-                logging.info(f'{data}')
-            control.radar_stay_alive(m_comm_socket)
+        recv_thread = Thread(target = receive, args=(m_comm_socket, ))
+        recv_thread.start()
+        control.radar_tx_on(m_comm_socket)
+        time.sleep(20)
+        control.radar_tx_off(m_comm_socket)
+        time.sleep(5)
 
 
 if __name__ == '__main__':
