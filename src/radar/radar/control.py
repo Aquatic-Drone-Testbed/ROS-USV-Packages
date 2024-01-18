@@ -1,3 +1,5 @@
+# library for controlling the radar
+
 import socket
 import logging
 

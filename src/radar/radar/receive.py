@@ -1,5 +1,4 @@
-# Example multicast receiver script
-
+# Listen on multicast addr 232.1.179.1:2574 for radar data
 import socket
 import struct
 import logging

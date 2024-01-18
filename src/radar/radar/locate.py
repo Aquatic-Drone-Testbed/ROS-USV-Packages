@@ -1,4 +1,4 @@
-# Example multicast receiver script
+# Listen on multicast addr 224.0.0.1:5800 to find radar's location on the network
 
 import socket
 import struct
@@ -52,9 +52,6 @@ def main():
             logging.info(socket.ntohl(rRec.radar_port))
             logging.info(f'data_addr = {data_ip}:{data_port}')
             logging.info(f'radar_addr = {radar_ip}:{radar_port}')
-
-            # print(f'sending acknowledgement to {senderaddr}')
-            # sock.sendto(bytearray("ack", "utf-8"), senderaddr)
 
 
 if __name__ == '__main__':

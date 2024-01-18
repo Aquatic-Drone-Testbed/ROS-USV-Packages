@@ -1,4 +1,4 @@
-# ping pong client
+# send radar off command
 import socket
 import radar.control as control
 import logging

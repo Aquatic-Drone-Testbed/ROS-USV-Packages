@@ -1,6 +1,5 @@
-# ping pong client
+# Send radar keep alive command for 1 hour
 import socket
-import select
 import radar.control as control
 import logging
 from threading import Thread
@@ -8,12 +7,6 @@ import time
 
 def keep_alive(s: socket):
     while True:
-        # ready = select.select([s], [], [], control.TIMEOUT_IN_SECONDS)
-        # logging.debug(f'{ready=}')
-        # if ready[0]:
-        #     data, addr = s.recvfrom(2048)
-        #     logging.info(f'received {len(data)} bytes from {addr}')
-        #     logging.info(f'{data}')
         time.sleep(1)
         control.radar_stay_alive(s)
 
