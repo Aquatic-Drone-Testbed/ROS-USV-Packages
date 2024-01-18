@@ -1,4 +1,4 @@
-# ping pong server
+# example udp server than sends back the byte string "pong" back to client
 import socket
 
 def main():

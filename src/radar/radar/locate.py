@@ -1,8 +1,11 @@
-# Example multicast receiver script
+# Listen on multicast addr 224.0.0.1:5800 to find radar's location on the network
 
 import socket
 import struct
 from collections import namedtuple
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 LocationInfoBlock = namedtuple('LocationInfoBlock', 
                                'field1 field2 model_id field3 field4 field5 field6 data_ip data_port radar_ip radar_port')
@@ -24,27 +27,31 @@ def main():
         # on all interfaces.
         mreq = struct.pack('4sL', socket.inet_aton(MULTICAST_GROUP), socket.INADDR_ANY)
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        logging.info(f'initialized {sock=}')
         
         # Receive/respond loop
         while True:
             # print('waiting to receive message')
             data, senderaddr = sock.recvfrom(1024)
-            # print(f'received {len(data)} bytes from {senderaddr}')
+            logging.debug(f'received {len(data)} bytes from {senderaddr}')
+            logging.debug(data)
             if len(data) != 36:
                 continue
             
             rRec = LocationInfoBlock._make(struct.unpack('!IIBBHIIIIII', data))
             if rRec.model_id != 40: continue
             
-            print('RaymarineLocate received RadarReport')
-            ip_addr = struct.unpack('>4B', struct.pack('>I', socket.ntohl(rRec.radar_ip)))
-            port = struct.unpack('>2H', struct.pack('>I', socket.ntohl(rRec.radar_port)))
-            print(rRec)
-            print(f'radar_addr = {ip_addr}:{port}')
-
-            # print(f'sending acknowledgement to {senderaddr}')
-            # sock.sendto(bytearray("ack", "utf-8"), senderaddr)
-            print()
+            logging.info('RaymarineLocate received RadarReport')
+            data_ip = struct.unpack('4B', struct.pack('I', socket.ntohl(rRec.data_ip)))
+            data_port = struct.unpack('2H', struct.pack('I', socket.ntohl(rRec.data_port)))
+            
+            radar_ip = struct.unpack('4B', struct.pack('I', socket.ntohl(rRec.radar_ip)))
+            radar_port = struct.unpack('2H', struct.pack('I', socket.ntohl(rRec.radar_port)))
+            
+            logging.info(rRec)
+            logging.info(socket.ntohl(rRec.radar_port))
+            logging.info(f'data_addr = {data_ip}:{data_port}')
+            logging.info(f'radar_addr = {radar_ip}:{radar_port}')
 
 
 if __name__ == '__main__':
