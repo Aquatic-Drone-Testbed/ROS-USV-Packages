@@ -1,36 +1,35 @@
-# ping pong client
-import socket
-import select
-import radar.control as control
-import logging
-from threading import Thread
-import time
+# Example multicast receiver script
 
-def receive(s: socket):
-    while True:
-        ready = select.select([s], [], [], control.TIMEOUT_IN_SECONDS)
-        logging.debug(f'{ready=}')
-        if ready[0]:
-            data, addr = s.recvfrom(2048)
-            logging.info(f'received {len(data)} bytes from {addr}')
-            logging.info(f'{data}')
-        control.radar_stay_alive(s)
+import socket
+import struct
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 def main():
-    logging.info(f'Run radar receive')
-    with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as m_comm_socket:
-        m_comm_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        m_comm_socket.setblocking(0) # non-blocking socket
-        logging.info(f'initialized {m_comm_socket=}')
+    MULTICAST_GROUP = '232.1.179.1'
+    MULTICAST_PORT = 2574
+
+    # Create the socket
+    with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
-        control.radar_stay_alive(m_comm_socket)
-        recv_thread = Thread(target = receive, args=(m_comm_socket, ))
-        recv_thread.start()
-        time.sleep(0.5)
-        control.radar_tx_on(m_comm_socket)
-        time.sleep(3600)
-        control.radar_tx_off(m_comm_socket)
-        time.sleep(5)
+        # Bind to the server address
+        # on this port, receives ALL multicast groups
+        sock.bind(('', MULTICAST_PORT))
+        
+        # Tell the operating system to add the socket to the multicast group
+        # on all interfaces.
+        mreq = struct.pack('4sL', socket.inet_aton(MULTICAST_GROUP), socket.INADDR_ANY)
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        logging.info(f'initialized {sock=}')
+        
+        # Receive/respond loop
+        while True:
+            # print('waiting to receive message')
+            data, senderaddr = sock.recvfrom(1024)
+            logging.debug(f'received {len(data)} bytes from {senderaddr}')
+            logging.debug(data)
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ import struct
 from collections import namedtuple
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 LocationInfoBlock = namedtuple('LocationInfoBlock', 
                                'field1 field2 model_id field3 field4 field5 field6 data_ip data_port radar_ip radar_port')
@@ -27,6 +27,7 @@ def main():
         # on all interfaces.
         mreq = struct.pack('4sL', socket.inet_aton(MULTICAST_GROUP), socket.INADDR_ANY)
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        logging.info(f'initialized {sock=}')
         
         # Receive/respond loop
         while True:
@@ -47,10 +48,10 @@ def main():
             radar_ip = struct.unpack('4B', struct.pack('I', socket.ntohl(rRec.radar_ip)))
             radar_port = struct.unpack('2H', struct.pack('I', socket.ntohl(rRec.radar_port)))
             
-            logging.debug(rRec)
-            logging.debug(socket.ntohl(rRec.radar_port))
-            logging.debug(f'data_addr = {data_ip}:{data_port}')
-            logging.debug(f'radar_addr = {radar_ip}:{radar_port}')
+            logging.info(rRec)
+            logging.info(socket.ntohl(rRec.radar_port))
+            logging.info(f'data_addr = {data_ip}:{data_port}')
+            logging.info(f'radar_addr = {radar_ip}:{radar_port}')
 
             # print(f'sending acknowledgement to {senderaddr}')
             # sock.sendto(bytearray("ack", "utf-8"), senderaddr)
