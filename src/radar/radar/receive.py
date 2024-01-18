@@ -26,8 +26,9 @@ def main():
         control.radar_stay_alive(m_comm_socket)
         recv_thread = Thread(target = receive, args=(m_comm_socket, ))
         recv_thread.start()
+        time.sleep(0.5)
         control.radar_tx_on(m_comm_socket)
-        time.sleep(20)
+        time.sleep(3600)
         control.radar_tx_off(m_comm_socket)
         time.sleep(5)
 
