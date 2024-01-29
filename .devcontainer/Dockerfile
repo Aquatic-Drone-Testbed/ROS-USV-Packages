@@ -1,5 +1,5 @@
 FROM ros:humble
-ARG USERNAME=seamate
+ARG USERNAME=seamate-docker
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 

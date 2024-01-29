@@ -1,11 +1,11 @@
 {
     "name": "ROS 2 Development Container",
     "privileged": true,
-    "remoteUser": "seamate",
+    "remoteUser": "seamate-docker",
     "build": {
         "dockerfile": "Dockerfile",
         "args": {
-            "USERNAME": "seamate"
+            "USERNAME": "seamate-docker"
         }
     },
     "workspaceFolder": "/home/ws",
