@@ -1,6 +1,8 @@
-1992  cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
- 1993  cmake --build build -j `nproc`
- 1994  sudo cmake --install build
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build -j `nproc`
+sudo cmake --install build
 
- https://opencpn.org/wiki/dokuwiki/doku.php?id=opencpn:opencpn_user_manual:plugins:install_and_enable#plugin_package_installation_removal_pi
+https://opencpn-manuals.github.io/main/opencpn-dev/linux.html#_2_install_build_dependencies
+https://opencpn-manuals.github.io/main/AlternativeWorkflow/Local-Build.html
+https://opencpn.org/wiki/dokuwiki/doku.php?id=opencpn:opencpn_user_manual:plugins:install_and_enable#plugin_package_installation_removal_pi
  
