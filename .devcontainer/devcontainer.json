@@ -22,10 +22,10 @@
         }
     },
     // port defintiions
-    // 5800 = radar locate
-    // 3594 = radar data
-    // 3850 = radar command
-    // 20000 = radio
+    // 5800 = radar locate (working)
+    // 2575, 3594 = radar data ?
+    // 2575, 3850 = radar command ?
+    // 20000 = radio (arbitrarily selected)
     "appPort": ["5800:5800/udp", "2575:2575/udp", "3850:3850/udp", "3594:3594/udp", "20000:20000/udp", "20000:20000/tcp"],
     // "containerEnv": {
     //     "DISPLAY": "localhost:0",
