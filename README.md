@@ -10,5 +10,5 @@ Environment setup is based on [ROS2 Community Guide](https://docs.ros.org/en/hum
 4. Wait for container to install
 
 ## Building ros_tutorial package
-1. run `git submodule update --init --recursive` to pull the ros_tutorials repository
+1. run `git submodule update --init --recursive` to clone all the submodules
 2. run `colcon build`
