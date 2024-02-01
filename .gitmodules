@@ -6,3 +6,9 @@
 	path = src/examples
 	url = https://github.com/ros2/examples
 	branch = humble
+[submodule "OpenCPN"]
+	path = OpenCPN
+	url = https://github.com/OpenCPN/OpenCPN.git
+[submodule "radar_pi"]
+	path = radar_pi
+	url = https://github.com/opencpn-radar-pi/radar_pi.git
