@@ -7,8 +7,8 @@ import logging
 logging.basicConfig(level=logging.DEBUG) # Uncomment to enable debug logging
 
 HOST = '192.168.1.117'        # The remote host
-# PORT = 2575                 # The same port as used by the server
-PORT = 3850                 # The same port as used by the server
+PORT = 2575                 # The same port as used by the server
+# PORT = 3850                 # The same port as used by the server
 RADAR_ADDR = (HOST, PORT)
 
 TIMEOUT_IN_SECONDS = 1
