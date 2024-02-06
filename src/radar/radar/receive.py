@@ -8,7 +8,6 @@ logging.basicConfig(level=logging.DEBUG)
 def main():
     MULTICAST_GROUP = '232.1.179.1'
     MULTICAST_PORT = 2574
-    # MULTICAST_PORT = 3594
 
     # Create the socket
     with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as sock:
