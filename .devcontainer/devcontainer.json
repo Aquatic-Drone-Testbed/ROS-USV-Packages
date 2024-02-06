@@ -27,15 +27,15 @@
     // 2575 = radar command
     // 20000 = radio (arbitrarily selected)
     "appPort": ["5800:5800/udp", "2575:2575/udp", "2574:2574/udp", "20000:20000/udp", "20000:20000/tcp"],
+    "runArgs": [
+        "--net=host",
+        "-e", "DISPLAY=${env:DISPLAY}"
+    ],
     // "containerEnv": {
     //     "DISPLAY": "localhost:0",
     //     "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST",
     //     "ROS_DOMAIN_ID": "42"
     // },
-    // "runArgs": [
-        // "--net=host",
-        // "-e", "DISPLAY=${env:DISPLAY}"
-    // ],
     // "mounts": [
     //     // "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
     //     // "source=/dev/dri,target=/dev/dri,type=bind,consistency=cached",
