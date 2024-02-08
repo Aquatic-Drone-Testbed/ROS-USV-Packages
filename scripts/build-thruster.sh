@@ -6,6 +6,7 @@ unzip master.zip
 cd pigpio-master
 make
 sudo make install
-sudo apt-get install python-setuptools python3-setuptools python3-pigpio
+sudo apt-get install python-setuptools python3-setuptools python3-pigpio -y
 pip install pigpio
 sudo pigpiod
+cd ..
