@@ -1,5 +1,6 @@
 #!/bin/bash
 # Script for building thruster control package
+source install/setup.bash
 sudo apt install wget unzip -y
 wget https://github.com/joan2937/pigpio/archive/master.zip
 unzip master.zip
