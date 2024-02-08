@@ -52,12 +52,10 @@ def process_frame(data: bytes):
             pass
         case 0x00280003:
             process_quantum_scan_data(data)
-            pass
         case 0x00280002:
             process_quantum_report(data)
-            pass
         case 0x00280001:  # type and serial for Quantum radar
-            logging.debug('received frame 0x00280001')
+            pass
             # IF_serial = wxString::FromAscii(data + 10, 7)
             # MOD_serial = wxString::FromAscii(data + 4, 6)
             # if (MOD_serial == _('E70498')) {
@@ -88,7 +86,7 @@ def process_frame(data: bytes):
             # s << wxT('\n') << _('SKU ') << MOD_serial << _(' Serial #') << info.serialNr
             # SetInfoStatus(s)
         case 0x00010006:
-            logging.debug('received frame 0x00010006')
+            pass
             # IF_serial = wxString::FromAscii(data + 4, 7)
             # MOD_serial = wxString::FromAscii(data + 20, 7)
             # m_info = m_ri->GetRadarLocationInfo()
@@ -109,43 +107,43 @@ def process_frame(data: bytes):
             
 
 SQuantumScanDataHeader = namedtuple('SQuantumScanDataHeader', 
-                                ['type', 
-                                 'seq_num',
-                                 'something_1',
-                                 'scan_len',
-                                 'num_spokes', 
-                                 'something_3', 
-                                 'returns_per_range',
-                                 'azimuth',
-                                 'data_len'])
+                                    ['type', 
+                                    'seq_num',
+                                    'something_1',
+                                    'scan_len',
+                                    'num_spokes', 
+                                    'something_3', 
+                                    'returns_per_range',
+                                    'azimuth',
+                                    'data_len'])
 
 def process_quantum_scan_data(data: bytes):
-    if len(data) < 20:
+    if len(data) < 20: # ensure packet is longer than 20 bytes
         return
     qheader = SQuantumScanDataHeader._make(struct.unpack('<IHHHHHHHH', data[:20]))
     logging.info(qheader)
 
 QuantumRadarReport = namedtuple('QuantumRadarReport', 
                                 ['type', 
-                                 'status',
-                                 'something1',
-                                 'bearing_offset',
-                                 'something_14', 
-                                 'interference_rejection', 
-                                 'something_13',
-                                 'range_index',
-                                 'mode',
-                                 'controls',
-                                 'target_expansion',
-                                 'something_9',
-                                 'something_10',
-                                 'mbs_enabled',
-                                 'something_11',
-                                 'ranges',
-                                 'something_12'])
+                                'status',
+                                'something1',
+                                'bearing_offset',
+                                'something_14', 
+                                'interference_rejection', 
+                                'something_13',
+                                'range_index',
+                                'mode',
+                                'controls',
+                                'target_expansion',
+                                'something_9',
+                                'something_10',
+                                'mbs_enabled',
+                                'something_11',
+                                'ranges',
+                                'something_12'])
 
 def process_quantum_report(data: bytes):
-    if len(data) < 260:
+    if len(data) < 260: # ensure packet is longer than 260 bytes
         return
     # bl = QuantumRadarReport._make(struct.unpack('<IB9BLBB2BBB8IBBBB88B20I8I', data[:260]))
     bl = struct.unpack('<IB9BLBB2BBB8IBBBB88B20I8I', data[:260])
