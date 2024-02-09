@@ -11,4 +11,5 @@ sudo apt-get install python-setuptools python3-setuptools python3-pigpio python3
 pip install pigpio setuptools==58.2.0 
 sudo pigpiod
 cd ..
+rm master.zip
 sudo apt-get update && sudo apt-get upgrade -y
