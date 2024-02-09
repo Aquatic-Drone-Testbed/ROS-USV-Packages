@@ -7,7 +7,7 @@ unzip master.zip
 cd pigpio-master
 make
 sudo make install
-sudo apt-get install python-setuptools python3-setuptools python3-pigpio python3-pip -y
+sudo apt-get install python-setuptools python3-setuptools python3-pigpio python3-pip ros-humble-joy -y
 pip install pigpio setuptools==58.2.0 
 sudo pigpiod
 cd ..

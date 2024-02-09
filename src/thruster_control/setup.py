@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-        'thruster_control = thruster_control.thruster_control:main',
+        'thruster_control = thruster_control.thruster:main',
+        'joystick_control = thruster_control.joystick:main'
         ],
 },
 )
