@@ -12,4 +12,5 @@ pip install pigpio setuptools==58.2.0
 sudo pigpiod
 cd ..
 rm master.zip
+sudo rm -rf pigpio-master
 sudo apt-get update && sudo apt-get upgrade -y
