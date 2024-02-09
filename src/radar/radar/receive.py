@@ -33,6 +33,7 @@ def main():
             
             process_frame(data)
 
+
 def process_frame(data: bytes):
     if len(data) < 4: # data must be longer than 4 bytes
         return
@@ -107,21 +108,43 @@ def process_frame(data: bytes):
             
 
 SQuantumScanDataHeader = namedtuple('SQuantumScanDataHeader', 
-                                    ['type', 
-                                    'seq_num',
-                                    'something_1',
-                                    'scan_len',
-                                    'num_spokes', 
-                                    'something_3', 
-                                    'returns_per_range',
-                                    'azimuth',
-                                    'data_len'])
+                                    ['type', # u32
+                                    'seq_num', # u16
+                                    'something_1', # u16
+                                    'scan_len', # u16
+                                    'num_spokes', # u16
+                                    'something_3', # u16
+                                    'returns_per_range', # u16
+                                    'azimuth', # u16
+                                    'data_len']) # u16
+
 
 def process_quantum_scan_data(data: bytes):
     if len(data) < 20: # ensure packet is longer than 20 bytes
         return
-    qheader = SQuantumScanDataHeader._make(struct.unpack('<IHHHHHHHH', data[:20]))
-    logging.info(qheader)
+    
+    scan_header = data[:20]
+    packed_scan_data = data[20:]
+    
+    qheader = SQuantumScanDataHeader._make(struct.unpack('<IHHHHHHHH', scan_header))
+    qdata = unpack_data(packed_scan_data)
+    logging.info(f'{qheader=}')
+    logging.info(f'{qdata=}')
+    
+    
+def unpack_data(data: bytes):
+    unpacked_data = []
+    i = 0
+    while i < len(data):
+        if data[i] == 0x5C:
+            unpacked_data.extend([data[i+2]] * data[i+1])
+            i += 3
+        else:
+            unpacked_data.append(data[i])
+            i += 1
+
+    return unpacked_data
+
 
 QuantumRadarReport = namedtuple('QuantumRadarReport', 
                                 ['type', 
