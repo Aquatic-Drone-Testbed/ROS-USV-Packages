@@ -8,7 +8,17 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 LocationInfoBlock = namedtuple('LocationInfoBlock', 
-                               'field1 field2 model_id field3 field4 field5 field6 data_ip data_port radar_ip radar_port')
+                               ['field1', # u32
+                                'field2', # u32
+                                'model_id', # u8
+                                'field3', # u16
+                                'field4', # u32
+                                'field5', # u32
+                                'field6', # u32
+                                'data_ip', # u32
+                                'data_port', # u32
+                                'radar_ip', # u32
+                                'radar_port']) # u32
 
 def main():
     MULTICAST_GROUP = '224.0.0.1'
@@ -38,18 +48,22 @@ def main():
             if len(data) != 36:
                 continue
             
-            rRec = LocationInfoBlock._make(struct.unpack('!IIBBHIIIIII', data))
-            if rRec.model_id != 40: continue
+            rRec = LocationInfoBlock._make(struct.unpack('IIBBHIIIIII', data))
+            if rRec.model_id != 40:
+                continue
             
             logging.info('RaymarineLocate received RadarReport')
-            data_ip = struct.unpack('4B', struct.pack('I', socket.ntohl(rRec.data_ip)))
-            data_port = struct.unpack('2H', struct.pack('I', socket.ntohl(rRec.data_port)))
+            data_ip_tup = struct.unpack('4B', struct.pack('I', socket.ntohl(rRec.data_ip)))
+            data_ip = '.'.join([str(x) for x in data_ip_tup])
+            data_port_tup = struct.unpack('2H', struct.pack('>I', socket.ntohl(rRec.data_port)))
+            data_port = data_port_tup[0]
             
-            radar_ip = struct.unpack('4B', struct.pack('I', socket.ntohl(rRec.radar_ip)))
-            radar_port = struct.unpack('2H', struct.pack('I', socket.ntohl(rRec.radar_port)))
+            radar_ip_tup = struct.unpack('4B', struct.pack('I', socket.ntohl(rRec.radar_ip)))
+            radar_ip = '.'.join([str(x) for x in radar_ip_tup])
+            radar_port_tup = struct.unpack('2H', struct.pack('>I', socket.ntohl(rRec.radar_port)))
+            radar_port = radar_port_tup[0]
             
-            logging.info(rRec)
-            logging.info(socket.ntohl(rRec.radar_port))
+            logging.debug(rRec)
             logging.info(f'data_addr = {data_ip}:{data_port}')
             logging.info(f'radar_addr = {radar_ip}:{radar_port}')
 
