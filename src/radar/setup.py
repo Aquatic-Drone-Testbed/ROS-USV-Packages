@@ -20,12 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'locate = radar.locate:main',
-            'on = radar.on:main',
-            'off = radar.off:main',
-            'alive = radar.alive:main',
-            'receive = radar.receive:main',
-            'server = radar.server:main',
+            'quantum = radar.quantum:main',
         ],
     },
 )

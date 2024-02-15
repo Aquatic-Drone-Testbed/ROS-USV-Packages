@@ -4,34 +4,17 @@ import struct
 import logging
 from collections import namedtuple
 
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def main():
-    MULTICAST_GROUP = '232.1.179.1'
-    MULTICAST_PORT = 2574
-
-    # Create the socket
-    with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as sock:
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+def listen_radar(report_socket: socket):
+    while True:
+        try:
+            data, senderaddr = report_socket.recvfrom(1024)
+        except OSError:
+            break
+        logger.debug(f'received ({len(data)} bytes) from {senderaddr}')
         
-        # Bind to the server address
-        # on this port, receives ALL multicast groups
-        sock.bind(('', MULTICAST_PORT))
-        
-        # Tell the operating system to add the socket to the multicast group
-        # on all interfaces.
-        mreq = struct.pack('4sL', socket.inet_aton(MULTICAST_GROUP), socket.INADDR_ANY)
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-        logging.info(f'initialized {sock=}')
-        
-        # Receive/respond loop
-        while True:
-            # print('waiting to receive message')
-            data, senderaddr = sock.recvfrom(1024)
-            logging.debug(f'received {len(data)} bytes from {senderaddr}')
-            # logging.debug(data)
-            
-            process_frame(data)
+        process_frame(data)
 
 
 def process_frame(data: bytes):
@@ -39,7 +22,7 @@ def process_frame(data: bytes):
         return
     
     msg_id = struct.unpack('<I', data[:4])[0] # read first 4 bytes
-    logging.debug(f'received frame with {hex(msg_id)=}')
+    logger.debug(f'received frame with {hex(msg_id)=}')
     
     match msg_id:
         case 0x00010001:
@@ -102,9 +85,9 @@ def process_frame(data: bytes):
         case 0x00010009:
             pass
         case 0x00018942:
-            logging.debug('received frame other')
+            logger.debug('other frame')
         case _:
-            logging.debug('received frame default')
+            logger.debug('defaul frame')
             
 
 SQuantumScanDataHeader = namedtuple('SQuantumScanDataHeader', 
@@ -128,8 +111,8 @@ def process_quantum_scan_data(data: bytes):
     
     qheader = SQuantumScanDataHeader._make(struct.unpack('<IHHHHHHHH', scan_header))
     qdata = unpack_data(packed_scan_data)
-    logging.info(f'{qheader=}')
-    logging.info(f'{qdata=}')
+    logger.debug(f'{qheader=}')
+    logger.debug(f'{qdata=}')
     
     
 def unpack_data(data: bytes):
@@ -170,7 +153,4 @@ def process_quantum_report(data: bytes):
         return
     # bl = QuantumRadarReport._make(struct.unpack('<IB9BLBB2BBB8IBBBB88B20I8I', data[:260]))
     bl = struct.unpack('<IB9BLBB2BBB8IBBBB88B20I8I', data[:260])
-    logging.info(bl)
-
-if __name__ == '__main__':
-    main()
+    logger.debug(f'{bl=}')
