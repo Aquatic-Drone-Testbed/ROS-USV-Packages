@@ -2,6 +2,9 @@
 import socket
 import struct
 import logging
+
+import process_report
+
 from collections import namedtuple
 
 logger = logging.getLogger(__name__)
@@ -26,7 +29,7 @@ def process_frame(data: bytes):
     
     match msg_id:
         case 0x00010001:
-            # ProcessRMReport(data, len)
+            process_report.ProcessRMReport(data)
             pass
         case 0x00010002:
             # ProcessFixedReport(data, len)
