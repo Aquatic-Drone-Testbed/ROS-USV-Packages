@@ -3,7 +3,7 @@ import socket
 import struct
 import logging
 
-import process_report
+import radar.process_report
 
 from collections import namedtuple
 
@@ -29,7 +29,7 @@ def process_frame(data: bytes):
     
     match msg_id:
         case 0x00010001:
-            process_report.ProcessRMReport(data)
+            radar.process_report.ProcessRMReport(data)
             pass
         case 0x00010002:
             # ProcessFixedReport(data, len)
@@ -90,7 +90,7 @@ def process_frame(data: bytes):
         case 0x00018942:
             logger.debug('other frame')
         case _:
-            logger.debug('defaul frame')
+            logger.debug('default frame')
             
 
 SQuantumScanDataHeader = namedtuple('SQuantumScanDataHeader', 
