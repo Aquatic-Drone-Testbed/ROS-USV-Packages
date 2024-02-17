@@ -19,7 +19,8 @@ setup(
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': [
-        ],
-    },
+    'console_scripts': [
+        'thruster_control = <package_name>.thruster_control:main',
+    ],
+},
 )
