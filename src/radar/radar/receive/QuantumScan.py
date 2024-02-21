@@ -12,7 +12,7 @@ class QuantumScan:
     returns_per_range: int
     azimuth: int
     data_len: int
-    data: list[int] = field(default_factory=list)
+    data: list[int]
     
     @staticmethod
     def parse_header(data: bytes):

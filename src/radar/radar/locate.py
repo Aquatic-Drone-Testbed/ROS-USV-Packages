@@ -41,8 +41,6 @@ def detect_radar():
         
         # Receive/respond loop
         while True:
-            # data = bytes.fromhex('00000000928b80cb28000000030064000608100001b301e80e0a11007501a8c00f0a3600') # test
-            # senderaddr = '192.168.1.117' # test
             logger.info(f'locating radar...')
             data, senderaddr = locator_socket.recvfrom(1024)
             logger.debug(f'received ({len(data)} bytes) from {senderaddr}')

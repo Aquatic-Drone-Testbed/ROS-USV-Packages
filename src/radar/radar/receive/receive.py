@@ -4,6 +4,8 @@ import struct
 import logging
 
 import radar.receive.process_report
+from radar.receive.QuantumScan import QuantumScan
+from radar.receive.QuantumReport import QuantumReport
 
 from collections import namedtuple
 
@@ -15,7 +17,7 @@ def listen_radar(report_socket: socket):
             data, senderaddr = report_socket.recvfrom(1024)
         except OSError:
             break
-        logger.debug(f'received ({len(data)} bytes) from {senderaddr}')
+        # logger.debug(f'received ({len(data)} bytes) from {senderaddr}')
         
         process_frame(data)
 
@@ -25,11 +27,11 @@ def process_frame(data: bytes):
         return
     
     msg_id = struct.unpack('<I', data[:4])[0] # read first 4 bytes
-    logger.debug(f'received frame with {hex(msg_id)=}')
+    # logger.debug(f'received frame with {hex(msg_id)=}')
     
     match msg_id:
         case 0x00010001:
-            radar.receive.process_report.ProcessRMReport(data)
+            # radar.receive.process_report.ProcessRMReport(data)
             pass
         case 0x00010002:
             # ProcessFixedReport(data, len)
@@ -39,6 +41,7 @@ def process_frame(data: bytes):
             pass
         case 0x00280003:
             process_quantum_scan_data(data)
+            pass
         case 0x00280002:
             process_quantum_report(data)
         case 0x00280001:  # type and serial for Quantum radar
@@ -88,72 +91,28 @@ def process_frame(data: bytes):
         case 0x00010009:
             pass
         case 0x00018942:
-            logger.debug('other frame')
+            # logger.debug('other frame')
+            pass
         case _:
-            logger.debug('default frame')
-            
-
-SQuantumScanDataHeader = namedtuple('SQuantumScanDataHeader', 
-                                    ['type', # u32
-                                    'seq_num', # u16
-                                    'something_1', # u16
-                                    'scan_len', # u16
-                                    'num_spokes', # u16
-                                    'something_3', # u16
-                                    'returns_per_range', # u16
-                                    'azimuth', # u16
-                                    'data_len']) # u16
+            # logger.debug('default frame')
+            pass
 
 
 def process_quantum_scan_data(data: bytes):
     if len(data) < 20: # ensure packet is longer than 20 bytes
         return
     
-    scan_header = data[:20]
-    packed_scan_data = data[20:]
-    
-    qheader = SQuantumScanDataHeader._make(struct.unpack('<IHHHHHHHH', scan_header))
-    qdata = unpack_data(packed_scan_data)
-    logger.debug(f'{qheader=}')
-    logger.debug(f'{qdata=}')
-    
-    
-def unpack_data(data: bytes):
-    unpacked_data = []
-    i = 0
-    while i < len(data):
-        if data[i] == 0x5C:
-            unpacked_data.extend([data[i+2]] * data[i+1])
-            i += 3
-        else:
-            unpacked_data.append(data[i])
-            i += 1
+    qheader = QuantumScan.parse_header(data[:20])
+    qdata = QuantumScan.parse_data(data[20:])
+    qs = QuantumScan(*qheader, qdata)
+    logger.debug(f'{qs}')
 
-    return unpacked_data
-
-
-QuantumRadarReport = namedtuple('QuantumRadarReport', 
-                                ['type', 
-                                'status',
-                                'something1',
-                                'bearing_offset',
-                                'something_14', 
-                                'interference_rejection', 
-                                'something_13',
-                                'range_index',
-                                'mode',
-                                'controls',
-                                'target_expansion',
-                                'something_9',
-                                'something_10',
-                                'mbs_enabled',
-                                'something_11',
-                                'ranges',
-                                'something_12'])
 
 def process_quantum_report(data: bytes):
     if len(data) < 260: # ensure packet is longer than 260 bytes
         return
-    # bl = QuantumRadarReport._make(struct.unpack('<IB9BLBB2BBB8IBBBB88B20I8I', data[:260]))
-    bl = struct.unpack('<IB9BLBB2BBB8IBBBB88B20I8I', data[:260])
-    logger.debug(f'{bl=}')
+    
+    bl = QuantumReport.parse_report(data[:260])
+    print(bl)
+    qr = QuantumReport(*bl)
+    logger.debug(f'{qr=}')
