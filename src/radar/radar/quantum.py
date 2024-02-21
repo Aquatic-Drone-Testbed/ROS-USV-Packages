@@ -1,7 +1,7 @@
 import socket
 import radar.locate
 import radar.control
-import radar.receive.receive
+import radar.receive
 import struct
 from threading import Thread
 import logging
@@ -43,7 +43,7 @@ def main():
             logger.info(f'Initialized report_socket')
             
             logger.info(f'Run radar receive thread')
-            receive_thread = Thread(target = radar.receive.receive.listen_radar, 
+            receive_thread = Thread(target = radar.receive.listen_radar, 
                                     args=(report_socket,))
             receive_thread.start()
             receive_thread.join(SCAN_DURATION_SECONDS)

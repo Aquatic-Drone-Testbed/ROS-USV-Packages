@@ -1,5 +1,5 @@
-from radar.receive.QuantumScan import QuantumScan
-from radar.receive.QuantumReport import QuantumReport
+from radar.packets.QuantumScan import QuantumScan
+from radar.packets.QuantumReport import QuantumReport
 
 quantum_scan_packets = [
     '03002800926501015600fa0008001d006c005100000059006b5451045c080019282938473e2a4441373e202f212324232b253726282b2f292f2e2e36372b2f38333a333d3138393b40463f413b443e46474148414e474a5250504d514b4c5250465d595e57',
