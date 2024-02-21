@@ -6,7 +6,7 @@ import struct
 from threading import Thread
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 SCAN_DURATION_SECONDS = 10

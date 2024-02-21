@@ -3,7 +3,7 @@ import socket
 import struct
 import logging
 
-import radar.receive.process_report
+from radar.receive.RMReport import RMReport
 from radar.receive.QuantumScan import QuantumScan
 from radar.receive.QuantumReport import QuantumReport
 
@@ -31,7 +31,7 @@ def process_frame(data: bytes):
     
     match msg_id:
         case 0x00010001:
-            # radar.receive.process_report.ProcessRMReport(data)
+            process_rm_report(data)
             pass
         case 0x00010002:
             # ProcessFixedReport(data, len)
@@ -44,6 +44,7 @@ def process_frame(data: bytes):
             pass
         case 0x00280002:
             process_quantum_report(data)
+            pass
         case 0x00280001:  # type and serial for Quantum radar
             pass
             # IF_serial = wxString::FromAscii(data + 10, 7)
@@ -96,6 +97,15 @@ def process_frame(data: bytes):
         case _:
             # logger.debug('default frame')
             pass
+
+
+def process_rm_report(data: bytes):
+    if len(data) < 186: # ensure packet is longer than 186 bytes
+        return
+    
+    bl = RMReport.parse_report(data[:260])
+    rmr = RMReport(*bl)
+    logger.info(f'{rmr=}')
 
 
 def process_quantum_scan_data(data: bytes):
