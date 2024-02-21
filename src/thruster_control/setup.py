@@ -13,14 +13,15 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='seamate-docker',
+    maintainer='seamate',
     maintainer_email='dna@ucsb.edu',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description='Control Thruster Operation',
+    license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
-    'console_scripts': [
-        'thruster_control = <package_name>.thruster_control:main',
-    ],
+        'console_scripts': [
+        'thruster_control = thruster_control.thruster:main',
+        'joystick_control = thruster_control.joystick:main'
+        ],
 },
 )
