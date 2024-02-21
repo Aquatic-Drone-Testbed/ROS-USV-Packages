@@ -16,7 +16,8 @@ class QuantumScan:
     
     @staticmethod
     def parse_header(data: bytes):
-        return struct.unpack('<IHHHHHHHH', data)
+        fields = struct.unpack('<IHHHHHHHH', data)
+        return fields
     
     @staticmethod
     def parse_data(data: bytes):
@@ -30,4 +31,4 @@ class QuantumScan:
                 unpacked_data.append(data[i])
                 i += 1
 
-        return unpacked_data
+        return tuple(unpacked_data)

@@ -39,4 +39,5 @@ class RMReport:
     
     @staticmethod
     def parse_report(data: bytes):
-        return struct.unpack('<I44s132sB3sBB7sB2sB3sIB3sBB3sBB3sBB3sBHB3sB13sB', data)
+        fields = struct.unpack('<I44s132sB3sBB7sB2sB3sIB3sBB3sBB3sBB3sBHB3sB13sB', data)
+        return fields
