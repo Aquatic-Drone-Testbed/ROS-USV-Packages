@@ -3,7 +3,7 @@ import socket
 import struct
 import logging
 
-import radar.process_report
+import radar.receive.process_report
 
 from collections import namedtuple
 
@@ -29,7 +29,7 @@ def process_frame(data: bytes):
     
     match msg_id:
         case 0x00010001:
-            radar.process_report.ProcessRMReport(data)
+            radar.receive.process_report.ProcessRMReport(data)
             pass
         case 0x00010002:
             # ProcessFixedReport(data, len)
