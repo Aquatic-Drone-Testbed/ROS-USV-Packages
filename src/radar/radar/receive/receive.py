@@ -7,8 +7,6 @@ from radar.receive.RMReport import RMReport
 from radar.receive.QuantumScan import QuantumScan
 from radar.receive.QuantumReport import QuantumReport
 
-from collections import namedtuple
-
 logger = logging.getLogger(__name__)
 
 def listen_radar(report_socket: socket):
@@ -105,7 +103,7 @@ def process_rm_report(data: bytes):
     
     bl = RMReport.parse_report(data[:260])
     rmr = RMReport(*bl)
-    logger.info(f'{rmr=}')
+    logger.debug(f'{rmr=}')
 
 
 def process_quantum_scan_data(data: bytes):

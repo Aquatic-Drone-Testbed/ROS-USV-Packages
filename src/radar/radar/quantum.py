@@ -6,7 +6,7 @@ import struct
 from threading import Thread
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 SCAN_DURATION_SECONDS = 10
@@ -20,7 +20,7 @@ def main():
         command_socket.setblocking(0) # non-blocking socket
         logger.info(f'Initialized command_socket')
         
-        logger.info(f'Run radar receive thread')
+        logger.info(f'Run radar keep alive thread')
         keep_alive_thread = Thread(target = radar.control.standby_radar, args=(command_socket, radar_ip, radar_port))
         keep_alive_thread.start()
         
@@ -42,6 +42,7 @@ def main():
             report_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
             logger.info(f'Initialized report_socket')
             
+            logger.info(f'Run radar receive thread')
             receive_thread = Thread(target = radar.receive.receive.listen_radar, 
                                     args=(report_socket,))
             receive_thread.start()
