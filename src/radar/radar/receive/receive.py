@@ -113,6 +113,5 @@ def process_quantum_report(data: bytes):
         return
     
     bl = QuantumReport.parse_report(data[:260])
-    print(bl)
     qr = QuantumReport(*bl)
     logger.debug(f'{qr=}')
