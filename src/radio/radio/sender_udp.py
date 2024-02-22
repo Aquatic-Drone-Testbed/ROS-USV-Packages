@@ -6,6 +6,11 @@ import socket
 import cv2 
 from cv_bridge import CvBridge
 
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSReliabilityPolicy
+from rclpy.qos import QoSDurabilityPolicy
+
 class UDPSender(Node):
     def __init__(self):
         super().__init__('udp_sender_node')
@@ -17,9 +22,18 @@ class UDPSender(Node):
         
         # Create a CvBridge object to convert between ROS Image messages and OpenCV images
         self.bridge = CvBridge()
+        
+        
         # Adjust these topic names and types according to your actual topics and data types
-        self.create_subscription(Image, 'video_stream', self.video_stream_callback, 10)
-        self.create_subscription(String, 'gps_data', self.gps_data_callback, 10)
+        gps_data_qos = video_stream_qos = QoSProfile(
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=5,
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            durability=QoSDurabilityPolicy.VOLATILE
+        )
+     
+        self.create_subscription(Image, 'video_stream', self.video_stream_callback, video_stream_qos)
+        self.create_subscription(String, 'gps_data', self.gps_data_callback, gps_data_qos)
         
         # UDP target IP and port
         #adjust ports as needed

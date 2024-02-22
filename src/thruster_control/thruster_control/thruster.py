@@ -14,18 +14,31 @@ class ThrusterControl(Node):
             self.get_logger().error('Not connected to Raspberry Pi GPIO. Exiting...')
             rclpy.shutdown()
 
-        self.joy_subscription = self.create_subscription( # subscribes to the joystick input from joy node
-            Joy,
-            '/joy',
-            self.joy_callback,
-            10,
-            callback_group=ReentrantCallbackGroup())
+
+        # self.joy_subscription = self.create_subscription( # subscribes to the joystick input from joy node
+        #     Joy,
+        #     '/joy',
+        #     self.joy_callback,
+        #     10,
+        #     callback_group=ReentrantCallbackGroup())
         
+        
+        '''
+        ESC value range for thrusters 
+            max (forward): 1900 
+            min (reverse): 1100
+        
+        Joystick value range
+            min max    
+        
+        '''
         self.esc1_pulsewidth = 1500 # Initial startup for ESC 1
         self.esc2_pulsewidth = 1500 # Initial startup for ESC 2
         self.delay(0.7)
+        
         self.esc1_axis_value = 0  # Gets and stores latest joystick position
         self.esc2_axis_value = 0
+        
         self.pi.set_servo_pulsewidth(12, self.esc1_pulsewidth)  # gpio pin is 12
         self.pi.set_servo_pulsewidth(13, self.esc2_pulsewidth)  # gpio pin is 12
         

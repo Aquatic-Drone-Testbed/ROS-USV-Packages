@@ -33,8 +33,6 @@ class UDPReceiver(Node):
         
         if data_type == "KEY":
             topic = "thruster_control"
-        elif data_type == "RADAR":
-            topic = "radar_data"
         else: #add other keyboard or controller commands 
             self.get_logger().error(f"Unknown data type: {data_type}")
             return
