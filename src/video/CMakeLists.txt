@@ -24,10 +24,6 @@ include_directories(include ${OpenCV_INCLUDE_DIRS})
 add_executable(video_publisher src/video_publisher.cpp)
 ament_target_dependencies(video_publisher rclcpp sensor_msgs OpenCV cv_bridge)
 
-# Declare a C++ executable for the video subscriber
-add_executable(video_subscriber src/video_subscriber.cpp)
-ament_target_dependencies(video_subscriber rclcpp sensor_msgs OpenCV cv_bridge)
-
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
@@ -43,13 +39,7 @@ endif()
 # Install executables and resources
 install(TARGETS
   video_publisher
-  video_subscriber
   DESTINATION lib/${PROJECT_NAME}
-)
-
-install(DIRECTORY 
-  resource
-  DESTINATION share/${PROJECT_NAME}
 )
 
 # Export dependencies
