@@ -2,6 +2,11 @@
 
 This guide provides detailed steps for setting up a DHCP server, including configuring network settings, managing the DHCP service, and specifying DHCP server options.
 
+prerequire installation:
+  ```bash
+  apt install isc-dhcp-server`
+  ```
+
 ## 1. Network Configuration Preparation
 
 ### Configure Netplan
@@ -21,27 +26,52 @@ This guide provides detailed steps for setting up a DHCP server, including confi
     ```
 
 ## 2. Static IP Address Configuration on Raspberry Pi (Server)
+- **Update `/etc/netplan/01-use-network-manager.yaml`:** Adjust network settings for your DHCP server environment.
 
-- **Edit `/etc/network/interfaces` for a Static IP:** Configure the Raspberry Pi with a static IP address to ensure it remains consistent across reboots.
-
-    ```plaintext
-    auto eth0
-    iface eth0 inet static
-    address 193.168.1.1
-    netmask 255.255.255.0
-    gateway 193.168.1.1
+    ```yaml
+    network:
+      version: 2
+      renderer: NetworkManager
+      ethernets:
+        eth0:
+          addresses:
+            - 193.168.1.2/24
+          routes:
+            - to: default
+              via: 193.168.1.1
+          nameservers:
+              addresses: [8.8.8.8, 8.8.4.4]
     ```
 
     Apply the changes:
 
     ```bash
+    sudo netplan apply
     sudo systemctl restart NetworkManager
     ```
 
 ## 3. DHCP Server Configuration and Management
 
-- **Configure `dhcp.conf`:** Set up and manage the DHCP server service to start automatically and check its status.
+- **Configure `/etc/default/isc-dhcp-server`:** Designate which network interfaces the DHCP server should use.
 
+    ```plaintext
+    INTERFACESv4="eth0"
+    INTERFACESv6=""
+    ```
+- **check if the port is up**:
+    ```bash
+    nmcli device status
+    ```
+- **debug mode apply**:
+    ```bash
+    sudo netplan --debug apply
+    ```
+- **show netplan-eth0 details**:
+    ```bash
+    nmcli connection show netplan-eth0
+    ```
+- **Configure `dhcp.conf`:** Set up and manage the DHCP server service to start automatically and check its status.
+    
     Enable isc-dhcp-server at boot:
 
     ```bash
@@ -88,28 +118,5 @@ This guide provides detailed steps for setting up a DHCP server, including confi
 
 ### Specify Interfaces for the DHCP Server
 
-- **Configure `/etc/default/isc-dhcp-server`:** Designate which network interfaces the DHCP server should use.
-
-    ```plaintext
-    INTERFACESv4="eth0"
-    INTERFACESv6=""
-    ```
 
 ## Netplan Configuration for Network Management
-
-- **Update `/etc/netplan/01-use-network-manager.yaml`:** Adjust network settings for your DHCP server environment.
-
-    ```yaml
-    network:
-      version: 2
-      renderer: NetworkManager
-      ethernets:
-        eth0:
-          addresses:
-            - 193.168.1.2/24
-          routes:
-            - to: default
-              via: 193.168.1.1
-          nameservers:
-              addresses: [8.8.8.8, 8.8.4.4]
-    ```
