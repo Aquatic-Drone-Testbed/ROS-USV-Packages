@@ -2,23 +2,10 @@
 
 import socket
 import struct
-from collections import namedtuple
+from radar.packets.LocationInfo import LocationInfo
 import logging
 
 logger = logging.getLogger(__name__)
-
-LocationInfoBlock = namedtuple('LocationInfoBlock', 
-                               ['field1', # u32
-                                'field2', # u32
-                                'model_id', # u8
-                                'field3', # u16
-                                'field4', # u32
-                                'field5', # u32
-                                'field6', # u32
-                                'data_ip', # u32
-                                'data_port', # u32
-                                'radar_ip', # u32
-                                'radar_port']) # u32
 
 def detect_radar():
     MULTICAST_GROUP = '224.0.0.1'
@@ -47,21 +34,12 @@ def detect_radar():
             if len(data) != 36:
                 continue
             
-            location_info = LocationInfoBlock._make(struct.unpack('IIBBHIIIIII', data))
-            if location_info.model_id != QUANTUM_MODEL_ID:
+            li = LocationInfo(*LocationInfo.parse(data))
+            logger.debug(f'{li=}')
+            if li.model_id != QUANTUM_MODEL_ID:
                 # logger.warning(f'{location_info.model_id=} is not quantum')
                 continue
             
-            data_ip_tup = struct.unpack('4B', struct.pack('I', socket.ntohl(location_info.data_ip)))
-            data_port_tup = struct.unpack('2H', struct.pack('>I', socket.ntohl(location_info.data_port)))
-            data_ip = '.'.join([str(x) for x in data_ip_tup])
-            data_port = data_port_tup[0]
+            logger.info(f'Found radar at {li.radar_ip}')
             
-            radar_ip_tup = struct.unpack('4B', struct.pack('I', socket.ntohl(location_info.radar_ip)))
-            radar_port_tup = struct.unpack('2H', struct.pack('>I', socket.ntohl(location_info.radar_port)))
-            radar_ip = '.'.join([str(x) for x in radar_ip_tup])
-            radar_port = radar_port_tup[0]
-            
-            logger.info(f'Found radar at {radar_ip}')
-            
-            return radar_ip, radar_port, data_ip, data_port
+            return li
