@@ -14,9 +14,9 @@ class UDPReceiver(Node):
         port = self.get_parameter('port').get_parameter_value().integer_value
         host = self.get_parameter('host').get_parameter_value().string_value
 
-        self.publisher_ = self.create_publisher(String, "thruster_control", 10)
-        
         #TODO for other publishers
+        self.thruster_controller_publisher = self.create_publisher(String, "thruster_control", 10)
+        
         self.host = host
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -31,37 +31,30 @@ class UDPReceiver(Node):
 
     def listen(self):
         self.get_logger().info(f"UDP Receiver listening on {self.host}:{self.port}")
+        self.get_logger().info(f"UDP Receiver listening on {self.host}:{self.port}")
         while self.running:
-            data, _ = self.socket.recvfrom(1024)  # Buffer size is 1024 bytes
-            message = data.decode()
-            self.publish_data(message)
+            try:
+                data, _ = self.socket.recvfrom(1024)  # Buffer size is 1024 bytes
+                message = data.decode()
+                self.publish_data(message)
+            except Exception as e:
+                self.get_logger().error(f"An error occurred while receiving data: {e}")
+                # may want to break the loop or take other actions
+                break  # or `continue` depending on your error handling strategy
 
     def publish_data(self, data):
         # Assume data format "TYPE:ActualData"
         data_type, _, actual_data = data.partition(':')
         
-        if data_type == "KEY":
-            topic = "thruster_control"
-        else: #add other keyboard or controller commands 
-            self.get_logger().error(f"Unknown data type: {data_type}")
-            return
-
-        #TODO!!!
-        #Change the following code such that it will 
-        # alter data type depending on topic received 
-            
-        # Assume all topics use std_msgs/msg/String for simplicity
-        
         msg = String()
         msg.data = actual_data
-        # Dynamically select publisher based on data type
-        publisher = self.get_publisher_for_topic(topic)
-        if publisher:
-            publisher.publish(msg)
-            self.get_logger().info(f'Publishing to {topic}: "{actual_data}"')
-        else:
-            self.get_logger().error(f"No publisher available for topic: {topic}")
-
+        #TODO add other keyboard or controller commands 
+        match data_type:
+            case "KEY":
+                self.thruster_controller_publisher.publish(msg)
+                self.get_logger().info(f'Publishing to {"thruster_control"}: "{actual_data}"')
+            case _:
+                self.get_logger().error(f"Unknown data type: {data_type}")
 
     def stop(self):
         self.running = False
