@@ -11,8 +11,8 @@ class VideoPublisher : public rclcpp::Node
 public:
     VideoPublisher() 
     : Node("video_publisher"), 
-    // video_capture_(ament_index_cpp::get_package_share_directory("image_stream") + "/resource/testvideo.mp4")
-    video_capture_(0)
+    video_capture_(ament_index_cpp::get_package_share_directory("video_stream") + "/resource/testvideo.mp4")
+    // video_capture_(0)
     {
         publisher_ = this->create_publisher<sensor_msgs::msg::Image>("video_stream", 10);
         //get video fps

@@ -41,5 +41,10 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+install(DIRECTORY 
+  resource
+  DESTINATION share/${PROJECT_NAME}
+)
+
 # Export dependencies
 ament_package()
