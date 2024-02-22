@@ -52,8 +52,10 @@ class UDPSender(Node):
 
     def video_stream_callback(self, msg):
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+        compress_quality = [cv2.IMWRITE_JPEG_QUALITY, 10]
+        self.get_logger().info(f'Image received, shape: {cv_image.shape}')
         # Compress the image as JPEG to reduce size, we can change this whatever later
-        compressed_img = cv2.imencode('.jpg', cv_image)[1].tobytes()
+        compressed_img = cv2.imencode('.jpg', cv_image, compress_quality)[1].tobytes()
         self.send_udp_data(compressed_img, self.video_stream_port)
 
     def gps_data_callback(self, msg):
