@@ -1,3 +1,4 @@
+from tokenize import String
 import rclpy
 from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -9,20 +10,19 @@ import time
 class ThrusterControl(Node):
     def __init__(self):
         super().__init__('thruster_control')
+        
+        self.subscription = self.create_subscription(
+            String, 
+            'thruster_control', 
+            self.listener_callback, 
+            10)
+        self.subscription  # prevent unused variable warning
+        
         self.pi = pigpio.pi() # connect to pi
         if not self.pi.connected:
             self.get_logger().error('Not connected to Raspberry Pi GPIO. Exiting...')
             rclpy.shutdown()
 
-
-        # self.joy_subscription = self.create_subscription( # subscribes to the joystick input from joy node
-        #     Joy,
-        #     '/joy',
-        #     self.joy_callback,
-        #     10,
-        #     callback_group=ReentrantCallbackGroup())
-        
-        
         '''
         ESC value range for thrusters 
             max (forward): 1900 
@@ -32,9 +32,11 @@ class ThrusterControl(Node):
             min max    
         
         '''
+        
         self.esc1_pulsewidth = 1500 # Initial startup for ESC 1
         self.esc2_pulsewidth = 1500 # Initial startup for ESC 2
-        self.delay(0.7)
+        
+        time.sleep(0.7)
         
         self.esc1_axis_value = 0  # Gets and stores latest joystick position
         self.esc2_axis_value = 0
@@ -72,8 +74,6 @@ class ThrusterControl(Node):
         # Print ESC values in table format
         print(f"{timestamp:<20} | {self.esc1_pulsewidth:<17} | {self.esc2_pulsewidth}")
 
-    def delay(self, seconds: float):
-        time.sleep(seconds)
 
 def main(args=None):
     rclpy.init(args=args)

@@ -23,8 +23,7 @@ class UDPSender(Node):
         # Create a CvBridge object to convert between ROS Image messages and OpenCV images
         self.bridge = CvBridge()
         
-        
-        # Adjust these topic names and types according to your actual topics and data types
+                        # Adjust these topic names and types according to your actual topics and data types
         gps_data_qos = video_stream_qos = QoSProfile(
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=5,

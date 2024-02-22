@@ -5,9 +5,18 @@ import socket
 import threading
 
 class UDPReceiver(Node):
-    def __init__(self, host='', port=9000, topic='udp_data'):
+    def __init__(self):
         super().__init__('udp_receiver_node')
-        self.publisher_ = self.create_publisher(String, topic, 10)
+        # Declare and obtain the UDP port as a parameter
+        self.declare_parameter('port', 9000)  # Default port is 9000
+        self.declare_parameter('host', "127.0.0.1")  # Default ip addr is local host
+        
+        port = self.get_parameter('port').get_parameter_value().integer_value
+        host = self.get_parameter('host').get_parameter_value().string_value
+
+        self.publisher_ = self.create_publisher(String, "thruster_control", 10)
+        
+        #TODO for other publishers
         self.host = host
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -37,7 +46,12 @@ class UDPReceiver(Node):
             self.get_logger().error(f"Unknown data type: {data_type}")
             return
 
+        #TODO!!!
+        #Change the following code such that it will 
+        # alter data type depending on topic received 
+            
         # Assume all topics use std_msgs/msg/String for simplicity
+        
         msg = String()
         msg.data = actual_data
         # Dynamically select publisher based on data type
@@ -56,9 +70,7 @@ class UDPReceiver(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    udp_port = 9000  # Adjust the port as needed
-    topic = 'udp_data'  # The ROS topic to publish UDP data to
-    udp_receiver = UDPReceiver(port=udp_port, topic=topic)
+    udp_receiver = UDPReceiver()
     try:
         udp_receiver.start()
     except KeyboardInterrupt:
