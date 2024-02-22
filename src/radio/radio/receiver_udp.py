@@ -5,7 +5,7 @@ import socket
 import threading
 
 class UDPReceiver(Node):
-    def __init__(self, host='', port=9876, topic='udp_data'):
+    def __init__(self, host='', port=9000, topic='udp_data'):
         super().__init__('udp_receiver_node')
         self.publisher_ = self.create_publisher(String, topic, 10)
         self.host = host
@@ -32,7 +32,11 @@ class UDPReceiver(Node):
         data_type, _, actual_data = data.partition(':')
         
         if data_type == "KEY":
-            topic = "keyboard_commands"
+            topic = "thruster_control"
+        elif data_type == "VIDEO":
+            topic = "video_stream"
+        elif data_type == "RADAR":
+            topic = "radar_data"
         else: #add other keyboard or controller commands 
             self.get_logger().error(f"Unknown data type: {data_type}")
             return
@@ -56,7 +60,7 @@ class UDPReceiver(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    udp_port = 9876  # Adjust the port as needed
+    udp_port = 9000  # Adjust the port as needed
     topic = 'udp_data'  # The ROS topic to publish UDP data to
     udp_receiver = UDPReceiver(port=udp_port, topic=topic)
     try:

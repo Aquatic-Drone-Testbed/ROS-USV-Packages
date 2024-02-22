@@ -18,8 +18,8 @@ class UDPSender(Node):
         
         # UDP target IP and port
         #adjust ports as needed
-        self.video_stream_port = 9876
-        self.gps_data_port = 9877
+        self.video_stream_port = 9001
+        self.gps_data_port = 9000
         
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
