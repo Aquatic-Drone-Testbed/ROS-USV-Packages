@@ -10,13 +10,15 @@ class VideoPublisher : public rclcpp::Node
 {
 public:
     VideoPublisher() 
-    : Node("video_stream"), 
+    : Node("video_publisher"), 
     // video_capture_(ament_index_cpp::get_package_share_directory("image_stream") + "/resource/testvideo.mp4")
     video_capture_(0)
     {
-        publisher_ = this->create_publisher<sensor_msgs::msg::Image>("video_frame", 10);
+        publisher_ = this->create_publisher<sensor_msgs::msg::Image>("video_stream", 10);
         //get video fps
         double fps = video_capture_.get(cv::CAP_PROP_FPS);
+        if(fps == 0)
+            fps = 30; //default to 30fps (if not available in video metadata
         //log it
         RCLCPP_INFO(this->get_logger(), "Input Video: %fFPS", fps);
         //create a timer that will send video at the corresponding frame rate
