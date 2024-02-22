@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 import struct
+from radar.receive.QuantumControls import QuantumControls
+
 
 @dataclass(frozen=True, order=True)
 class QuantumReport:
@@ -26,7 +28,8 @@ class QuantumReport:
         fields = list(struct.unpack('<IB9sHBB2sBB32sBB3sB88s80s32s', data))
         fields[2] = struct.unpack('<9B', fields[2])
         fields[6] = struct.unpack('<2B', fields[6])
-        fields[9] = list(struct.unpack('<8s8s8s8s', fields[9]))
+        fields[9] = tuple(QuantumControls(*QuantumControls.parse_controls(d)) \
+                          for d in struct.unpack('<8s8s8s8s', fields[9]))
         fields[12] = struct.unpack('<3B', fields[12])
         fields[14] = struct.unpack('<88B', fields[14])
         fields[15] = struct.unpack('<20I', fields[15])
