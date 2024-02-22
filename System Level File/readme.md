@@ -4,29 +4,29 @@ This guide provides detailed steps for setting up a DHCP server, including confi
 
 prerequire installation:
   ```bash
-  apt install isc-dhcp-server`
+  apt install isc-dhcp-server
   ```
 
-## 1. Network Configuration Preparation
+## 1. Static IP Address Configuration on Raspberry Pi (Server)
 
-### Configure Netplan
+### Configure Netplan files
 
-- **Set Permissions for Netplan Configuration File `/etc/netplan/01-use-network-manager.yaml`:** 
+- **Set Permissions for Netplan Configuration File `/etc/netplan/01-xxx-network-manager.yaml`:** 
 
   permissions can be temporarily adjusted to:
 
     ```bash
-    chmod 666 /etc/netplan/01-use-network-manager.yaml
+    sudo chmod 666 /etc/netplan/01-xxx-network-manager.yaml
     ```
 
   Ensure  has the correct permissions for security and accessibility after you modifity it:
 
     ```bash
-    sudo chmod 644 /etc/netplan/01-use-network-manager.yaml
+    sudo chmod 644 /etc/netplan/01-xxx-network-manager.yaml
     ```
 
-## 2. Static IP Address Configuration on Raspberry Pi (Server)
-- **Update `/etc/netplan/01-use-network-manager.yaml`:** Adjust network settings for your DHCP server environment.
+
+- **Update `/etc/netplan/01-use-network-manager.yaml`:** Adjust network settings for your DHCP server environment. 
 
     ```yaml
     network:
@@ -50,7 +50,26 @@ prerequire installation:
     sudo systemctl restart NetworkManager
     ```
 
-## 3. DHCP Server Configuration and Management
+## 2. DHCP Server Configuration and Management
+### DHCP Server Configuration File
+
+- **Edit `/etc/dhcp/dhcp.conf`:** Provide DHCP server with a range of IP addresses to distribute and specify network settings.
+
+    ```plaintext
+    subnet 193.168.1.0 netmask 255.255.255.0 {
+      range 193.168.1.10 193.168.1.49;
+      range 193.168.1.51 193.168.1.100;
+      option domain-name-servers 8.8.8.8;
+      option routers 193.168.1.1;
+      option broadcast-address 193.168.1.255;
+      default-lease-time 6000;
+      max-lease-time 7200;
+    }
+    host radar {
+      hardware ethernet C4:93:00:2C:A9:81;
+      fixed-address 193.168.1.50;
+    }
+    ```
 
 - **Configure `/etc/default/isc-dhcp-server`:** Designate which network interfaces the DHCP server should use.
 
@@ -95,28 +114,3 @@ prerequire installation:
     ```bash
     sudo nmap -sn 193.168.1.0/24
     ```
-
-### DHCP Server Configuration File
-
-- **Edit `/etc/dhcp/dhcp.conf`:** Provide DHCP server with a range of IP addresses to distribute and specify network settings.
-
-    ```plaintext
-    subnet 193.168.1.0 netmask 255.255.255.0 {
-      range 193.168.1.10 193.168.1.49;
-      range 193.168.1.51 193.168.1.100;
-      option domain-name-servers 8.8.8.8;
-      option routers 193.168.1.1;
-      option broadcast-address 193.168.1.255;
-      default-lease-time 6000;
-      max-lease-time 7200;
-    }
-    host radar {
-      hardware ethernet C4:93:00:2C:A9:81;
-      fixed-address 193.168.1.50;
-    }
-    ```
-
-### Specify Interfaces for the DHCP Server
-
-
-## Netplan Configuration for Network Management
