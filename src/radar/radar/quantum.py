@@ -1,7 +1,7 @@
 import socket
 import radar.locate
 import radar.control
-import radar.receive.receive
+import radar.receive
 import struct
 from threading import Thread
 import logging
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 SCAN_DURATION_SECONDS = 10
 
 def main():
-    radar_ip, radar_port, data_ip, data_port = radar.locate.detect_radar()
+    li = radar.locate.detect_radar()
     
     # Create command socket
     with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as command_socket:
@@ -21,12 +21,12 @@ def main():
         logger.info(f'Initialized command_socket')
         
         logger.info(f'Run radar keep alive thread')
-        keep_alive_thread = Thread(target = radar.control.standby_radar, args=(command_socket, radar_ip, radar_port))
+        keep_alive_thread = Thread(target = radar.control.standby_radar, args=(command_socket, li.radar_ip, li.radar_port))
         keep_alive_thread.start()
         
         radar.control.radar_tx_on(command_socket=command_socket,
-                                  command_ip=radar_ip,
-                                  command_port=radar_port)
+                                  command_ip=li.radar_ip,
+                                  command_port=li.radar_port)
         
         # Create report socket
         with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP) as report_socket:
@@ -34,24 +34,24 @@ def main():
             
             # Bind to the server address
             # on this port, receives ALL multicast groups
-            report_socket.bind(('', data_port))
+            report_socket.bind(('', li.data_port))
             
             # Tell the operating system to add the socket to the multicast group
             # on all interfaces.
-            mreq = struct.pack('4sL', socket.inet_aton(data_ip), socket.INADDR_ANY)
+            mreq = struct.pack('4sL', socket.inet_aton(li.data_ip), socket.INADDR_ANY)
             report_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
             logger.info(f'Initialized report_socket')
             
             logger.info(f'Run radar receive thread')
-            receive_thread = Thread(target = radar.receive.receive.listen_radar, 
+            receive_thread = Thread(target = radar.receive.listen_radar, 
                                     args=(report_socket,))
             receive_thread.start()
             receive_thread.join(SCAN_DURATION_SECONDS)
             logger.info(f'Ending receive thread')
         
         radar.control.radar_tx_off(command_socket=command_socket,
-                                   command_ip=radar_ip,
-                                   command_port=radar_port)
+                                   command_ip=li.radar_ip,
+                                   command_port=li.radar_port)
         keep_alive_thread.join(1)
 
 if __name__ == '__main__':

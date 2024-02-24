@@ -1,5 +1,11 @@
-from radar.receive.QuantumScan import QuantumScan
-from radar.receive.QuantumReport import QuantumReport
+from radar.packets.QuantumScan import QuantumScan
+from radar.packets.QuantumReport import QuantumReport
+from radar.packets.LocationInfo import LocationInfo
+
+quantum_locate_packets = [
+    '000000000000c0cb290000000300640006081000000100e84614c1c07501a8c046140008',
+    '00000000928b80cb28000000030064000608100001b301e80e0a11007501a8c00f0a3600',
+]
 
 quantum_scan_packets = [
     '03002800926501015600fa0008001d006c005100000059006b5451045c080019282938473e2a4441373e202f212324232b253726282b2f292f2e2e36372b2f38333a333d3138393b40463f413b443e46474148414e474a5250504d514b4c5250465d595e57',
@@ -34,3 +40,10 @@ def main():
         print(qs)
         range_meters = qr.ranges[qr.range_index] * qs.scan_len / qs.returns_per_range / 2
         print(f'{range_meters=}')
+
+    for hex_stream in quantum_locate_packets:
+        data = bytes.fromhex(hex_stream)
+        
+        bl = LocationInfo.parse(data[:36])
+        li = LocationInfo(*bl)
+        print(li)

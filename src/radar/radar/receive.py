@@ -3,11 +3,13 @@ import socket
 import struct
 import logging
 
-from radar.receive.RMReport import RMReport
-from radar.receive.QuantumScan import QuantumScan
-from radar.receive.QuantumReport import QuantumReport
+from radar.packets.RMReport import RMReport
+from radar.packets.QuantumScan import QuantumScan
+from radar.packets.QuantumReport import QuantumReport
 
 logger = logging.getLogger(__name__)
+
+range_meters = 1
 
 def listen_radar(report_socket: socket):
     while True:
@@ -123,3 +125,5 @@ def process_quantum_report(data: bytes):
     bl = QuantumReport.parse_report(data[:260])
     qr = QuantumReport(*bl)
     logger.debug(f'{qr=}')
+    
+    range_meters = qr.ranges[qr.range_index]
