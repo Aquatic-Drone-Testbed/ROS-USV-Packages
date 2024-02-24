@@ -1,15 +1,16 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
-import gps
+from gps import *
 
 class GPSDriverNode(Node):
     def __init__(self):
         super().__init__('gps_driver')
         self.publisher_ = self.create_publisher(NavSatFix, 'gps_data', 10)
         self.timer = self.create_timer(1.0, self.publish_gps_data)
-        self.gps_session = gps.gps("localhost", "2947") #gps daemon running on local host with port 2947
-        self.gps_session.stream(gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
+        #gps daemon running on local host with port 2947
+        self.gps_session = gps(mode=WATCH_ENABLE)
+        print(f"gps_session created with mode={WATCH_ENABLE}")
 
     def publish_gps_data(self):
         try:

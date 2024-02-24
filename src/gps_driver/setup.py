@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'gps'
+package_name = 'gps_driver'
 
 setup(
     name=package_name,
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'gps_node = gps.gps_node:main'
+            'gps_node = gps_driver.gps_node:main'
         ],
     },
 )

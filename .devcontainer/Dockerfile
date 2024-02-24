@@ -16,6 +16,7 @@ RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y python3-pip gpsd gpsd-clients python3-gps
 # Install pigpio Python library
 RUN pip3 install pigpio
+RUN pip3 install gps
 
 ENV SHELL /bin/bash
 
