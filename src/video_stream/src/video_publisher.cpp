@@ -11,8 +11,8 @@ class VideoPublisher : public rclcpp::Node
 public:
     VideoPublisher() 
     : Node("video_publisher"), 
-    video_capture_(ament_index_cpp::get_package_share_directory("video_stream") + "/resource/testvideo.mp4")
-    // video_capture_(0)
+    //   video_capture_(ament_index_cpp::get_package_share_directory("video_stream") + "/resource/testvideo.mp4")
+      video_capture_(0)
     {
         publisher_ = this->create_publisher<sensor_msgs::msg::Image>("video_stream", 10);
         //get video fps
@@ -41,6 +41,9 @@ private:
             rclcpp::shutdown();
             return;
         }
+        //Log message
+        RCLCPP_INFO(this->get_logger(), "Sending frame: Width = %d, Height = %d, Type = %d", frame.cols, frame.rows, frame.type());
+        
         // Convert to a ROS2 sensor_msgs::msg::Image and publish
         auto msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frame).toImageMsg();
         publisher_->publish(*msg);
