@@ -20,10 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'server-tcp = radio.server_tcp:main',
-            'client-tcp = radio.client_tcp:main',
-            'server-udp = radio.server_udp:main',
-            'client-udp = radio.client_udp:main',
+            'receiver_udp = radio.receiver_udp:main',
+            'sender_udp = radio.sender_udp:main',
         ],
     },
 )
