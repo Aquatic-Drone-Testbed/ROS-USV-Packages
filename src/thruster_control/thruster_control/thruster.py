@@ -78,9 +78,9 @@ class ThrusterControl(Node):
         self.get_logger().info(f'Set Right ESC PWM value to {self.rightESC_pulsewidth}')
         #     self.rightESC_pulsewidth = new_pulsewidth2
         
-        timestamp = time.strftime("%H:%M:%S", time.localtime())
+        # timestamp = time.strftime("%H:%M:%S", time.localtime())
         # Print ESC values in table format
-        print(f"{timestamp:<20} | {self.leftESC_pulsewidth:<17} | {self.rightESC_pulsewidth}")
+        # print(f"{timestamp:<20} | {self.leftESC_pulsewidth:<17} | {self.rightESC_pulsewidth}")
 
 
 def main(args=None):
