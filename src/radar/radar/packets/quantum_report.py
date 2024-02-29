@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import struct
-from radar.packets.QuantumControls import QuantumControls
+from radar.packets.quantum_controls import QuantumControls
 
 
 @dataclass(frozen=True, order=True)
