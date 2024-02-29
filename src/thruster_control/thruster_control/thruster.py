@@ -68,12 +68,14 @@ class ThrusterControl(Node):
         # new_pulsewidth = max(Thruster   Control.ESC_MIN_VAL, min(ThrusterControl.ESC_MAX_VAL, self.leftESC_pulsewidth + adjustment))
         # if new_pulsewidth != self.leftESC_pulsewidth: #updates PWM value if joystick moved
         self.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN1, self.leftESC_pulsewidth)
+        self.get_logger().info(f'Set Left ESC PWM value to {self.leftESC_pulsewidth}')
         #     self.leftESC_pulsewidth = new_pulsewidth
 
         # adjustment2 = self.rightESC_axis_value * 10  # Smaller scale factor for smoother adjustment
         # new_pulsewidth2 = max(ThrusterControl.ESC_MAX_VAL, min(ThrusterControl.ESC_MAX_VAL, self.rightESC_pulsewidth + adjustment2))
         # if new_pulsewidth != self.rightESC_pulsewidth: #updates PWM value if joystick moved
         self.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN2, self.rightESC_pulsewidth)
+        self.get_logger().info(f'Set Right ESC PWM value to {self.rightESC_pulsewidth}')
         #     self.rightESC_pulsewidth = new_pulsewidth2
         
         timestamp = time.strftime("%H:%M:%S", time.localtime())
