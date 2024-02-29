@@ -38,7 +38,7 @@ class ThrusterControl(Node):
         self.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN1, self.leftESC_pulsewidth)  # gpio pin is 12
         self.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN2, self.rightESC_pulsewidth)  # gpio pin is 13
         
-        self.timer = self.create_timer(0.25, self.timer_callback)  # Adjust PWM vaue at most every 0.25 seconds
+        self.timer = self.create_timer(0.1, self.timer_callback)  # Adjust PWM vaue at most every 0.1 seconds
         
         self.get_logger().info('Thruster control initialized.')
         print(f"{'Timestamp':<20} | {'Left ESC Pulsewidth':<17} | {'Right ESC Pulsewidth'}")
