@@ -50,7 +50,7 @@ class UDPReceiver(Node):
         msg.data = actual_data
         #TODO add other keyboard or controller commands 
         match data_type:
-            case "KEY":
+            case "CTRL":
                 self.thruster_controller_publisher.publish(msg)
                 self.get_logger().info(f'Publishing to {"thruster_control"}: "{actual_data}"')
             case _:
