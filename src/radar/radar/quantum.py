@@ -25,7 +25,7 @@ class Qauntum(Node):
         self.report_socket = self.create_report_socket() # socket for receiving radar data
         
         # keey radar alive
-        self.get_logger().info(f'Run radar keep alive')
+        self.get_logger().info(f'Keeping radar alive')
         self.standby_timer = self.create_timer(1, self.standby_timer_callback) # 1 second timer
         self.alive_counter = 0
         
@@ -72,7 +72,7 @@ class Qauntum(Node):
             self.get_logger().info(f'Found radar at {quantum_location.radar_ip}')
             break
         
-        self.get_logger().info(f'Clsoing locator socket')
+        self.get_logger().info(f'Closing locator socket')
         locator_socket.close()
         return quantum_location
 
