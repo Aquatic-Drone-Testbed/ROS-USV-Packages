@@ -94,7 +94,8 @@ class Qauntum(Node):
         report_socket.bind(('', self.quantum_location.data_port))
         # Tell the operating system to add the socket to the multicast group
         # on all interfaces.
-        mreq = struct.pack('4sL', socket.inet_aton(self.quantum_location.data_ip), socket.INADDR_ANY)
+        # mreq = struct.pack('4sL', socket.inet_aton(self.quantum_location.data_ip), socket.INADDR_ANY)
+        mreq = struct.pack('4s4s', socket.inet_aton(self.quantum_location.data_ip), socket.inet_aton("192.168.2.2")) # set to the ip of the receiver
         report_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         self.get_logger().info(f'Initialized report socket')
         
