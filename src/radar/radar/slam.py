@@ -15,6 +15,11 @@ class Slam(Node):
         self.cli = self.create_client(RadarData, 'radar_data')
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
+        
+        self.num_spokes = 0
+        self.spokes = []
+        self.range_meters = 0
+        self.spoke_ragne = 0
 
 
     def reqest_radar_data(self):
@@ -24,7 +29,7 @@ class Slam(Node):
 
 
     def process_frame(self, data: bytes):
-        self.get_logger().info(f'Processing {len(data)} bytes')
+        # self.get_logger().info(f'Processing {len(data)} bytes')
         # self.get_logger().debug(f'{data}')
         if len(data) < 4: return # data must be longer than 4 bytes
         
@@ -98,6 +103,8 @@ class Slam(Node):
             case _:
                 # self.get_logger().debug('default frame')
                 pass
+        
+        self.plot_spokes()
 
 
     def process_rm_report(self, data: bytes):
@@ -115,6 +122,11 @@ class Slam(Node):
         qdata = QuantumScan.parse_data(data[20:])
         qs = QuantumScan(*qheader, qdata)
         self.get_logger().debug(f'{qs}')
+        
+        self.num_spokes = qs.num_spokes
+        self.spokes.append(qs.data)
+        self.spokes = self.spokes[:qs.num_spokes]
+        self.spoke_range = self.range_meters * qs.scan_len / qs.returns_per_range / 2
 
 
     def process_quantum_report(self, data: bytes):
@@ -123,6 +135,13 @@ class Slam(Node):
         bl = QuantumReport.parse_report(data[:260])
         qr = QuantumReport(*bl)
         self.get_logger().debug(f'{qr}')
+        
+        self.range_meters = qr.ranges[qr.range_index]
+
+
+    def plot_spokes(self):
+        # self.get_logger().debug(f'{self.spokes}')
+        # self.get_logger().debug(f'{self.spoke_range=}')
 
 
 def main():
