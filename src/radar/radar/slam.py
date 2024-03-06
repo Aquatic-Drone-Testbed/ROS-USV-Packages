@@ -134,14 +134,14 @@ class Slam(Node):
         
         bl = QuantumReport.parse_report(data[:260])
         qr = QuantumReport(*bl)
-        self.get_logger().debug(f'{qr}')
+        self.get_logger().info(f'{qr}')
         
         self.range_meters = qr.ranges[qr.range_index]
 
 
     def plot_spokes(self):
         # self.get_logger().debug(f'{self.spokes}')
-        # self.get_logger().debug(f'{self.spoke_range=}')
+        self.get_logger().debug(f'{self.spoke_range=}')
 
 
 def main():
