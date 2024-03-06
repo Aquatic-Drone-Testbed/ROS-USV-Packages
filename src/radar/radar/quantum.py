@@ -19,6 +19,8 @@ class Qauntum(Node):
         # data = bytes.fromhex('00000000928b80cb28000000030064000608100001b301e80e0a11007501a8c00f0a3600')
         # bl = LocationInfo.parse(data[:36])
         # self.quantum_location = LocationInfo(*bl)
+        self.declare_parameter('host', "127.0.0.1")  # Default ip addr is local host
+        self.host = self.get_parameter('host').get_parameter_value().string_value
         self.quantum_location = self.locate_quantum() # this might take a while to return
         
         self.command_socket = self.create_command_socket() # socket for controlling radar
@@ -94,8 +96,9 @@ class Qauntum(Node):
         report_socket.bind(('', self.quantum_location.data_port))
         # Tell the operating system to add the socket to the multicast group
         # on all interfaces.
-        # mreq = struct.pack('4sL', socket.inet_aton(self.quantum_location.data_ip), socket.INADDR_ANY)
-        mreq = struct.pack('4s4s', socket.inet_aton(self.quantum_location.data_ip), socket.inet_aton("192.168.2.2")) # set to the ip of the receiver
+        # mreq = struct.pack('4sL', socket.inet_aton(self.quantum_location.data_ip), socket.INADDR_ANY) # no needed
+        self.get_logger().info(f'receiver host: {self.host}')
+        mreq = struct.pack('4s4s', socket.inet_aton(self.quantum_location.data_ip), socket.inet_aton(self.host)) # set to the ip of the receiver
         report_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         self.get_logger().info(f'Initialized report socket')
         
