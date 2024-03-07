@@ -8,7 +8,7 @@ from radar.packets.rmr_report import RMReport
 from radar.packets.quantum_scan import QuantumScan
 from radar.packets.quantum_report import QuantumReport
 
-KILOMETERS_PER_NAUTICAL_MILE = 1.852
+KM_PER_NMI = 1.852
 
 class Slam(Node):
 
@@ -139,12 +139,12 @@ class Slam(Node):
         qr = QuantumReport(*bl)
         self.get_logger().info(f'{qr}')
         
-        self.range_meters = qr.ranges[qr.range_index]
-        self.radar_ranges = [KILOMETERS_PER_NAUTICAL_MILE * range_in_naut_miles for range_in_naut_miles in qr.ranges]
+        self.radar_ranges = [KM_PER_NMI * nmi for nmi in qr.ranges]
+        self.range_meters = self.radar_ranges[qr.range_index] * 2
 
     def plot_spokes(self):
-        # self.get_logger().debug(f'{self.spokes}')
-        # self.get_logger().info(f'{self.spoke_range=}')
+        # self.get_logger().info(f'{self.spokes}')
+        self.get_logger().info(f'{self.spoke_range=}m')
         self.get_logger().info(f'{self.radar_ranges=}')
 
 
