@@ -33,7 +33,7 @@ class VideoPublisher(Node):
             return
 
         self.get_logger().info(f'Sending frame: Width = {frame.shape[1]}, Height = {frame.shape[0]}')
-        image_message = self.bridge.cv2_to_imgmsg(np.asarray(frame), encoding='bgr8')
+        image_message = self.bridge.cv2_to_imgmsg(np.asarray(frame), encoding='rgb8')
         self.publisher_.publish(image_message)
 
 def main(args=None):
