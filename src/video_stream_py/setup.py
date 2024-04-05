@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'video_publisher = video_stream_py.video_publisher_imageio:main'
+            # 'video_publisher = video_stream_py.video_publisher_py:main'
         ],
     },
 )

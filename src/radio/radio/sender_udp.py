@@ -48,7 +48,7 @@ class UDPSender(Node):
         if isinstance(data, str):
             data = data.encode()
         self.udp_socket.sendto(data, (self.target_ip, port))
-        self.get_logger().info(f'Sent data to {self.target_ip}:{port}')
+        self.get_logger().info(f'Sent {len(data)} bytes to {self.target_ip}:{port}')
 
     def video_stream_callback(self, msg):
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough') #Convert MSG to OpenCV/CV_Bridge image format
