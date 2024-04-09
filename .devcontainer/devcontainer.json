@@ -26,7 +26,7 @@
     // 2574 = radar data
     // 2575 = radar command
     // 20000 = radio (arbitrarily selected)
-    "appPort": ["5800:5800/udp", "2575:2575/udp", "2574:2574/udp", "20000:20000/udp", "20000:20000/tcp"],
+    "appPort": ["5800:5800/udp", "2575:2575/udp", "2574:2574/udp", "9000:9000/udp", "9001:9001/udp", "20000:20000/tcp"],
     "runArgs": [
         "--net=host",
         "--privileged",
