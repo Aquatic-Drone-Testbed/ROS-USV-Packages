@@ -23,8 +23,7 @@ class UDPSender(Node):
         self.target_ip = target_ip_param
         print(f"self.target_ip = {self.target_ip}") 
         # Create a CvBridge object to convert between ROS Image messages and OpenCV images
-        # self.bridge = CvBridge()
-        
+        self.bridge = CvBridge()
                         # Adjust these topic names and types according to your actual topics and data types
         gps_data_qos = video_stream_qos = QoSProfile(
             history=QoSHistoryPolicy.KEEP_LAST,
@@ -33,13 +32,13 @@ class UDPSender(Node):
             durability=QoSDurabilityPolicy.VOLATILE
         )
      
-        # self.create_subscription(Image, 'video_stream', self.video_stream_callback, video_stream_qos)
+        self.create_subscription(Image, 'video_stream', self.video_stream_callback, video_stream_qos)
         self.create_subscription(NavSatFix, 'gps_data', self.gps_data_callback, gps_data_qos)
         
         # UDP target IP and port
         #adjust ports as needed
         self.gps_data_port = 9001
-        # self.video_stream_port = 9002
+        self.video_stream_port = 9002
 
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
