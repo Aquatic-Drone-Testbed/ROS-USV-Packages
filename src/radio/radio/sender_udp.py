@@ -4,10 +4,9 @@ from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import NavSatFix
 import socket
-
-# import cv2 
-# from cv_bridge import CvBridge
-
+from PIL import Image as PilImage
+import io
+from cv_bridge import CvBridge
 
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSHistoryPolicy
@@ -50,15 +49,16 @@ class UDPSender(Node):
         if isinstance(data, str):
             data = data.encode()
         self.udp_socket.sendto(data, (self.target_ip, port))
-        self.get_logger().info(f'Sent data to {self.target_ip}:{port}')
+        self.get_logger().info(f'Sent {len(data)} bytes to {self.target_ip}:{port}')
 
-    # def video_stream_callback(self, msg):
-    #     cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
-    #     # compress_quality = [cv2.IMWRITE_JPEG_QUALITY, 10]
-    #     self.get_logger().info(f'Image received, shape: {cv_image.shape}')
-    #     # Compress the image as JPEG to reduce size, we can change this whatever later
-    #     compressed_img = cv2.imencode('.jpg', cv_image, compress_quality)[1].tobytes()
-    #     self.send_udp_data(compressed_img, self.video_stream_port)
+    def video_stream_callback(self, msg):
+        cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough') #Convert MSG to OpenCV/CV_Bridge image format
+        pil_image = PilImage.fromarray(cv_image) # Convert to Pillow image (allows us to avoid using openCV)
+        # Compress the image as JPEG
+        buffer = io.BytesIO()
+        pil_image.save(buffer, format='JPEG', quality=10)  # Adjust the quality as needed
+        compressed_img = buffer.getvalue()
+        self.send_udp_data(compressed_img, self.video_stream_port)
 
     def gps_data_callback(self, msg):
         gps_data_str = f"Latitude: {msg.latitude}, Longitude: {msg.longitude}, Altitude: {msg.altitude}"
