@@ -17,12 +17,6 @@ RUN apt-get install -y python3-pip gpsd gpsd-clients python3-gps
 # Install pigpio Python library
 RUN pip3 install pigpio
 RUN pip3 install gps
-# For Camera Package
-RUN sudo apt install libopencv-dev -y
-RUN sudo apt install ros-humble-cv-bridge -y
-RUN pip install imageio-ffmpeg
-RUN pip install imageio
-
 
 ENV SHELL /bin/bash
 
