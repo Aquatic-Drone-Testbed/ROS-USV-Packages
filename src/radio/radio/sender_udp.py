@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
+from sensor_msgs.msg import NavSatFix
 import socket
 from PIL import Image as PilImage
 import io
@@ -20,10 +21,9 @@ class UDPSender(Node):
         self.declare_parameter('target_ip', '127.0.0.1')  # Default to localhost
         target_ip_param = self.get_parameter('target_ip').get_parameter_value().string_value
         self.target_ip = target_ip_param
-        
+        self.get_logger().info(f"self.target_ip = {self.target_ip}") 
         # Create a CvBridge object to convert between ROS Image messages and OpenCV images
         self.bridge = CvBridge()
-        
                         # Adjust these topic names and types according to your actual topics and data types
         gps_data_qos = video_stream_qos = QoSProfile(
             history=QoSHistoryPolicy.KEEP_LAST,
@@ -33,12 +33,12 @@ class UDPSender(Node):
         )
      
         self.create_subscription(Image, 'video_stream', self.video_stream_callback, video_stream_qos)
-        self.create_subscription(String, 'gps_data', self.gps_data_callback, gps_data_qos)
+        self.create_subscription(NavSatFix, 'gps_data', self.gps_data_callback, gps_data_qos)
         
         # UDP target IP and port
         #adjust ports as needed
-        self.video_stream_port = 9001
-        self.gps_data_port = 9000
+        self.gps_data_port = 9001
+        self.video_stream_port = 9002
 
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -60,7 +60,9 @@ class UDPSender(Node):
         self.send_udp_data(compressed_img, self.video_stream_port)
 
     def gps_data_callback(self, msg):
-        self.send_udp_data(msg.data, self.gps_data_port)
+        gps_data_str = f"Latitude: {msg.latitude}, Longitude: {msg.longitude}, Altitude: {msg.altitude}"
+        self.get_logger().info(f"sending to control station: {gps_data_str}")
+        self.send_udp_data(gps_data_str, self.gps_data_port)
 
 def main(args=None):
     rclpy.init(args=args)
