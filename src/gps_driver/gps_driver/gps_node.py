@@ -10,7 +10,7 @@ class GPSDriverNode(Node):
         self.timer = self.create_timer(1.0, self.publish_gps_data)
         #gps daemon running on local host with port 2947
         self.gps_session = gps(mode=WATCH_ENABLE)
-        print(f"gps_session created with mode={WATCH_ENABLE}")
+        self.get_logger().info(f"gps_session created with mode={WATCH_ENABLE}")
 
     def publish_gps_data(self):
         try:
@@ -24,7 +24,7 @@ class GPSDriverNode(Node):
                     if hasattr(report, 'alt'):
                         gps_msg.altitude = report.alt
                     self.publisher_.publish(gps_msg)
-                    print(f"Published real GPS data:\n{gps_msg}")
+                    self.get_logger().info(f"Published real GPS data:\n{gps_msg}")
                 else:
                     gps_msg = NavSatFix()
                     # hard coded for testing indoor
@@ -32,7 +32,7 @@ class GPSDriverNode(Node):
                     gps_msg.longitude = 222.22
                     gps_msg.altitude = 333.33
                     self.publisher_.publish(gps_msg)
-                    print(f"Published fake GPS data:\n{gps_msg}")
+                    self.get_logger().info(f"Published fake GPS data:\n{gps_msg}")
         except StopIteration:
             self.get_logger().warn('GPSD has terminated')
 

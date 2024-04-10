@@ -21,7 +21,7 @@ class UDPSender(Node):
         self.declare_parameter('target_ip', '127.0.0.1')  # Default to localhost
         target_ip_param = self.get_parameter('target_ip').get_parameter_value().string_value
         self.target_ip = target_ip_param
-        print(f"self.target_ip = {self.target_ip}") 
+        self.get_logger().info(f"self.target_ip = {self.target_ip}") 
         # Create a CvBridge object to convert between ROS Image messages and OpenCV images
         self.bridge = CvBridge()
                         # Adjust these topic names and types according to your actual topics and data types
@@ -61,7 +61,7 @@ class UDPSender(Node):
 
     def gps_data_callback(self, msg):
         gps_data_str = f"Latitude: {msg.latitude}, Longitude: {msg.longitude}, Altitude: {msg.altitude}"
-        print(f"sending to control station: {gps_data_str}")
+        self.get_logger().info(f"sending to control station: {gps_data_str}")
         self.send_udp_data(gps_data_str, self.gps_data_port)
 
 def main(args=None):
