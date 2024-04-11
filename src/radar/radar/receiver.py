@@ -21,8 +21,13 @@ class FrameId:
 class Receiver(Node):
     def __init__(self):
         super().__init__('receiver')
-        self.spoke_publisher = self.create_publisher(Spoke, 'topic_radar_spoke', 10)
-        self.cli = self.create_client(RadarData, 'radar_data')
+        self.spoke_publisher = self.create_publisher(
+            Spoke, 
+            'topic_radar_spoke', 
+            10)
+        self.cli = self.create_client(
+            RadarData, 
+            'radar_data')
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
 
@@ -38,11 +43,11 @@ class Receiver(Node):
 
 
     def process_frame(self, data: bytes):
-        # self.get_logger().info(f'Processing {len(data)} bytes')
-        # self.get_logger().debug(f'{data}')
         if len(data) < 4: return # data must be longer than 4 bytes
         
         self.last_frame_id = struct.unpack('<I', data[:4])[0] # read first 4 bytes
+        self.get_logger().debug(f'{self.last_frame_id=} ({len(data)} bytes)')
+        # self.get_logger().debug(f'{data}')
         
         match self.last_frame_id:
             case FrameId.RM_REPORT:
@@ -134,6 +139,7 @@ class Receiver(Node):
         msg.azimuth = qs.azimuth
         msg.data = qs.data
         self.spoke_publisher.publish(msg)
+        self.get_logger().debug(f'published {msg=}')
 
 
     def process_quantum_report(self, data: bytes):
@@ -141,7 +147,7 @@ class Receiver(Node):
         
         bl = QuantumReport.parse_report(data[:260])
         qr = QuantumReport(*bl)
-        self.get_logger().info(f'{qr}')
+        self.get_logger().debug(f'{qr}')
         
         self.last_quantum_report = qr
 
@@ -153,6 +159,7 @@ def main():
     while True:
         response = receiver_node.reqest_radar_data()
         receiver_node.process_frame(response.data)
+        rclpy.spin_once(receiver_node)
 
     receiver_node.destroy_node()
     rclpy.shutdown()

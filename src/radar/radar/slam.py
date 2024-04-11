@@ -7,7 +7,7 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from radar_interfaces.msg import Spoke
 
-MAX_SPOKE_LENGTH = 128
+MAX_SPOKE_LENGTH = 256
 MAX_INTENSITY = 128
 MAX_SPOKE_COUNT = 250
 
@@ -18,15 +18,16 @@ class Slam(Node):
         self.subscription = self.create_subscription(
             Spoke,
             'topic_radar_spoke',
-            self.listener_callback,
+            self.radar_spoke_callback,
             10)
         
         self.radar_spokes = None # buffer for storing radar spokes
 
-    def listener_callback(self, msg):
+    def radar_spoke_callback(self, spoke):
+        self.get_logger().debug(f'Received spoke {spoke.azimuth}')
         if self.radar_spokes is None: return
-        
-        self.radar_spokes[msg.azimuth, :len(msg.data)] = msg.data
+
+        self.radar_spokes[spoke.azimuth, :len(spoke.data)] = spoke.data
         self.spokes_received += 1
 
 
@@ -55,18 +56,20 @@ class Slam(Node):
         self.publisher_.publish(msg)
         
         # block until 250 spokes fill buffer
-        while self.spokes_received < MAX_SPOKE_COUNT: pass
+        while self.spokes_received < MAX_SPOKE_COUNT:
+            rclpy.spin_once(self)
         
         # turn off radar
         msg.data = 'stop_scan'
         self.publisher_.publish(msg)
         
         radar_data = np.copy(self.radar_spokes/MAX_INTENSITY * 255)
-        self.radar_spokes = None # clear buffer
         
         # logging
         # self.get_logger().info(f'{self.radar_spokes=} {self.radar_spokes.shape}')
         cv2.imshow('polar image', radar_data); cv2.waitKey(0)
+        
+        self.radar_spokes = None # clear buffer
         
         return radar_data
 
@@ -141,8 +144,8 @@ class Slam(Node):
             _type_: _description_
         """
         # [TODO]: apply morphological and bilateral filters
-        intensity_threshold = 200 # [TODO]: adjust threshold intensity value
-        _, filtered_radar_image = cv2.threshold(radar_image, intensity_threshold, 255, cv2.THRESH_BINARY)
+        INTENSITY_THRESHOLD = 100 # [TODO]: adjust threshold intensity value. range:[0,255]
+        _, filtered_radar_image = cv2.threshold(radar_image, INTENSITY_THRESHOLD, 255, cv2.THRESH_BINARY)
         cv2.imshow('filtered image', filtered_radar_image); cv2.waitKey(0)
         
         return filtered_radar_image
@@ -171,8 +174,8 @@ def main():
     rclpy.init()
 
     slam_node = Slam()
-    # radar_data = slam_node.get_radar_data()
-    radar_data = slam_node.get_random_radar_data()
+    radar_data = slam_node.get_radar_data()
+    # radar_data = slam_node.get_random_radar_data()
     slam_node.generate_map(r=radar_data, k=None, p=None, K=None, w=None, gamma=None)
     slam_node.destroy_node()
     rclpy.shutdown()
