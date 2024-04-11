@@ -11,9 +11,9 @@ MAX_SPOKE_LENGTH = 128
 MAX_INTENSITY = 128
 MAX_SPOKE_COUNT = 250
 
-class Imager(Node):
+class Slam(Node):
     def __init__(self):
-        super().__init__('imager')
+        super().__init__('slam')
         self.publisher_ = self.create_publisher(String, 'radar_control', 10)
         self.subscription = self.create_subscription(
             Spoke,
@@ -62,9 +62,9 @@ class Imager(Node):
 def main():
     rclpy.init()
 
-    imager_node = Imager()
-    imager_node.generate_radar_image()
-    imager_node.destroy_node()
+    slam_node = Slam()
+    slam_node.generate_radar_image()
+    slam_node.destroy_node()
     rclpy.shutdown()
 
 

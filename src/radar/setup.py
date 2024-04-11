@@ -22,7 +22,7 @@ setup(
         'console_scripts': [
             'quantum = radar.quantum:main',
             'receiver = radar.receiver:main',
-            'imager = radar.imager:main',
+            'slam = radar.slam:main',
         ],
     },
 )
