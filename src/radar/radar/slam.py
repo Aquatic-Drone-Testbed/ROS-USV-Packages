@@ -63,7 +63,7 @@ class Slam(Node):
         msg.data = 'stop_scan'
         self.publisher_.publish(msg)
         
-        radar_data = np.copy(self.radar_spokes/MAX_INTENSITY * 255)
+        radar_data = np.copy(self.radar_spokes/MAX_INTENSITY * 255).astype(np.uint8)
         
         # logging
         # self.get_logger().info(f'{self.radar_spokes=} {self.radar_spokes.shape}')
@@ -144,7 +144,7 @@ class Slam(Node):
             _type_: _description_
         """
         # [TODO]: apply morphological and bilateral filters
-        INTENSITY_THRESHOLD = 100 # [TODO]: adjust threshold intensity value. range:[0,255]
+        INTENSITY_THRESHOLD = 128 # [TODO]: adjust threshold intensity value. range:[0,255]
         _, filtered_radar_image = cv2.threshold(radar_image, INTENSITY_THRESHOLD, 255, cv2.THRESH_BINARY)
         cv2.imshow('filtered image', filtered_radar_image); cv2.waitKey(0)
         
