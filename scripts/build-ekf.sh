@@ -5,4 +5,4 @@ echo "Sourcing setup files..."
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 # Runs the EKF node using the specified YAML configuration
-ros2 run robot_localization ekf_node --ros-args --params-file /home/ws/src/robot_localization/params/ekf.yaml
+ros2 launch robot_localization ekf.launch.py

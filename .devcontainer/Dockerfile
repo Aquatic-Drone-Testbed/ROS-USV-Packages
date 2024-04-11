@@ -6,7 +6,6 @@ ARG USER_GID=$USER_UID
 # Create the user
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    # [Optional] Add sudo support. Omit if you don't need to install software after connecting.
     && apt-get update \
     && apt-get install -y sudo \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
@@ -23,10 +22,13 @@ RUN groupadd -f -r i2c && \
     usermod -a -G i2c seamate-docker
 ENV SHELL /bin/bash
 
-# ********************************************************
-# * Anything else you want to do like clean up goes here *
-# ********************************************************
+# Copy scripts and set permissions
+COPY /home/ws/scripts/build-ekf.sh /home/$USERNAME/scripts/build-ekf.sh
+COPY /home/ws/scripts/build-imu.sh /home/$USERNAME/scripts/build-imu.sh
+RUN chmod +x /home/$USERNAME/scripts/build-ekf.sh /home/$USERNAME/scripts/build-imu.sh
 
-# [Optional] Set the default user. Omit if you want to keep the default as root.
+# Clean up
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
 USER $USERNAME
 CMD ["/bin/bash"]
