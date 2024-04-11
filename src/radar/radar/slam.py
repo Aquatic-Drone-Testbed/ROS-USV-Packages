@@ -119,9 +119,9 @@ class Slam(Node):
         """
         radar_image = cv2.warpPolar(
             src=radar_data, 
-            dsize=(2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH), 
-            center=(MAX_SPOKE_LENGTH, MAX_SPOKE_LENGTH), 
-            maxRadius=MAX_SPOKE_LENGTH, flags=cv2.WARP_INVERSE_MAP)
+            dsize=(4*MAX_SPOKE_LENGTH, 4*MAX_SPOKE_LENGTH), 
+            center=(2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH), 
+            maxRadius=2*MAX_SPOKE_LENGTH, flags=cv2.WARP_INVERSE_MAP)
         
         # self.get_logger().info(f'{radar_image=} {radar_image.shape}')
         cv2.imshow('cartesian image', radar_image); cv2.waitKey(0)
@@ -141,7 +141,7 @@ class Slam(Node):
             _type_: _description_
         """
         # [TODO]: apply morphological and bilateral filters
-        intensity_threshold = 128 # [TODO]: adjust threshold intensity value
+        intensity_threshold = 200 # [TODO]: adjust threshold intensity value
         _, filtered_radar_image = cv2.threshold(radar_image, intensity_threshold, 255, cv2.THRESH_BINARY)
         cv2.imshow('filtered image', filtered_radar_image); cv2.waitKey(0)
         
@@ -158,7 +158,9 @@ class Slam(Node):
             _type_: _description_
         """
         # [TODO]: extract the contours from the binary image using polygon extraction
-        return binary_image
+        im2, contours, hierarchy = cv2.findContours(binary_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        
+        cv2.drawContours(binary_image, contours, -1, (0,255,0), 3)
 
 
     def extract_coastline(self, D, w, gamma, K):
