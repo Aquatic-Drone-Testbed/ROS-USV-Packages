@@ -144,7 +144,7 @@ class Slam(Node):
             _type_: _description_
         """
         # [TODO]: apply morphological and bilateral filters
-        INTENSITY_THRESHOLD = 128 # [TODO]: adjust threshold intensity value. range:[0,255]
+        INTENSITY_THRESHOLD = 0 # [TODO]: adjust threshold intensity value. range:[0,255]
         _, filtered_radar_image = cv2.threshold(radar_image, INTENSITY_THRESHOLD, 255, cv2.THRESH_BINARY)
         cv2.imshow('filtered image', filtered_radar_image); cv2.waitKey(0)
         
@@ -161,9 +161,11 @@ class Slam(Node):
             _type_: _description_
         """
         # [TODO]: extract the contours from the binary image using polygon extraction
-        im2, contours, hierarchy = cv2.findContours(binary_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, hierarchy = cv2.findContours(binary_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         
-        cv2.drawContours(binary_image, contours, -1, (0,255,0), 3)
+        img = cv2.cvtColor(binary_image, cv2.COLOR_GRAY2RGB) 
+        cv2.drawContours(img, contours, -1, (0,255,0), 3)
+        cv2.imshow('contoured image', img); cv2.waitKey(0)
 
 
     def extract_coastline(self, D, w, gamma, K):
