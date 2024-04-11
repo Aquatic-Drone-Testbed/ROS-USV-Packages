@@ -21,49 +21,140 @@ class Slam(Node):
             self.listener_callback,
             10)
         
-        self.radar_spokes = None
-
+        self.radar_spokes = None # buffer for storing radar spokes
 
     def listener_callback(self, msg):
-        try:
-            self.radar_spokes[msg.azimuth, :len(msg.data)] = msg.data
-            self.spokes_received += 1
-        except:
-            pass
-
-
-    def generate_radar_image(self):
+        if self.radar_spokes is None: return
+        
+        self.radar_spokes[msg.azimuth, :len(msg.data)] = msg.data
+        self.spokes_received += 1
+        
+        
+    def get_radar_data(self):
+        # initialize buffer to store radar spoke data
         self.radar_spokes = np.zeros((MAX_SPOKE_COUNT, MAX_SPOKE_LENGTH), np.uint8)
-        # self.radar_spokes = np.random.uniform(low=0, high=MAX_INTENSITY, size=(250, MAX_SPOKE_LENGTH)) # random test
+        # self.radar_spokes = np.random.uniform(low=0, high=MAX_INTENSITY, size=(250, MAX_SPOKE_LENGTH)) # random spokes
         self.spokes_received = 0
         
+        # turn on radar
         msg = String()
         msg.data = 'start_scan'
         self.publisher_.publish(msg)
         
-        # block until 250 spokes received
+        # block until 250 spokes fill buffer
         while self.spokes_received < MAX_SPOKE_COUNT: pass
         
-        self.radar_image = cv2.warpPolar(
-            src=self.radar_spokes, 
+        # turn off radar
+        msg.data = 'stop_scan'
+        self.publisher_.publish(msg)
+        
+        radar_data = np.copy(self.radar_spokes/MAX_INTENSITY)
+        self.radar_spokes = None # clear buffer
+        
+        # logging
+        # self.get_logger().info(f'{self.radar_spokes=} {self.radar_spokes.shape}')
+        cv2.imshow('polar image', radar_data); cv2.waitKey(0)
+        
+        return radar_data
+
+
+    def generate_map(self, r, k, p, K, w, gamma):
+        """Coastline Extraction and Parameterization algorithm from
+        https://ieeexplore.ieee.org/document/8600301
+
+        Args:
+            r (_type_): raw radar data
+            k (_type_): spline curve degree
+            p (_type_): knot spacing
+            K (_type_): coordinate transformation matrix
+            w (_type_): minimum polygon area threshold
+            gamma (_type_): angular resolution to discretize the polar coordinate 
+        """
+        I = self.generate_radar_image(r, K)
+        D = self.detect_contour(self.filter_image(I))
+        P = self.extract_coastline(D, w, gamma, K)
+        
+        # psuedocode
+        # P={P1,…,Pn} , F⟵∅
+
+        # for i ← 1 to n do
+
+        # Pi={p0,…,pm}
+
+        # ł=∑j=1m∥pj−pj−1∥
+
+        # B⟵ CoxdeBoorRecursion(Pi,ρ,l, k)
+
+        # C⟵ SplineCurveFitting(Pi,B)
+
+        # F⟵F⋃C
+
+        # end for
+        
+        ############## end of pseudocode ##############
+
+
+    def generate_radar_image(self, radar_data, K):
+        """convert 2d polar image of radar data to 2d cartesian image
+
+        Args:
+            radar_data (_type_): 2D array of dimension (MAX_SPOKE_COUNT, MAX_SPOKE_LENGTH)
+                                 with each row representing a single radar spoke
+
+        Returns:
+            radar_image (_type_): grayscale image of radar scan in cartesian coordinates
+        """
+        radar_image = cv2.warpPolar(
+            src=radar_data, 
             dsize=(2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH), 
             center=(MAX_SPOKE_LENGTH, MAX_SPOKE_LENGTH), 
             maxRadius=MAX_SPOKE_LENGTH, flags=cv2.WARP_INVERSE_MAP)
         
-        msg.data = 'stop_scan'
-        self.publisher_.publish(msg)
+        # self.get_logger().info(f'{radar_image=} {radar_image.shape}')
+        cv2.imshow('cartesian image', radar_image); cv2.waitKey(0)
         
-        self.get_logger().info(f'{self.radar_spokes} {self.radar_spokes.shape}')
-        self.get_logger().info(f'{self.radar_image} {self.radar_image.shape}')
-        cv2.imshow('polar image', self.radar_spokes/MAX_INTENSITY); cv2.waitKey(0)
-        cv2.imshow('cartesian image', self.radar_image/MAX_INTENSITY); cv2.waitKey(0)
+        return radar_image
+
+
+    def filter_image(self, radar_image):
+        """apply morphological and bilateral filters for denoising
+        and convert grayscale radar_image to binary image according to 
+        predetermined threshold intensity value
+        
+        Args:
+            radar_image (_type_): grayscale image of radar scan in cartesian coordinates
+
+        Returns:
+            _type_: _description_
+        """
+        # [TODO]: apply morphological and bilateral filters
+        # [TODO]: convert to binary image according to some threshold intensity value
+        return radar_image
+
+
+    def detect_contour(self, binary_image):
+        """extract the contours from the binary image using polygon extraction
+
+        Args:
+            binary_image (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        # [TODO]: extract the contours from the binary image using polygon extraction
+        return binary_image
+
+
+    def extract_coastline(self, D, w, gamma, K):
+        pass
 
 
 def main():
     rclpy.init()
 
     slam_node = Slam()
-    slam_node.generate_radar_image()
+    radar_data = slam_node.get_radar_data()
+    slam_node.generate_map(r=radar_data, k=None, p=None, K=None, w=None, gamma=None)
     slam_node.destroy_node()
     rclpy.shutdown()
 
