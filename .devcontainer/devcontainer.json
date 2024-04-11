@@ -33,7 +33,7 @@
     "runArgs": [
         "--net=host",
         "--privileged",
-        "-e", "DISPLAY=${env:DISPLAY}"
+        "-e", "DISPLAY=:0"
     ],
     // "containerEnv": {
     //     "DISPLAY": "localhost:0",

@@ -1,20 +1,34 @@
-import struct
-
-from radar_interfaces.srv import RadarData
 import rclpy
 from rclpy.node import Node
+import struct
+
+from std_msgs.msg import String
+from radar_interfaces.srv import RadarData
+from radar_interfaces.msg import Spoke
 
 from radar.packets.rmr_report import RMReport
 from radar.packets.quantum_scan import QuantumScan
 from radar.packets.quantum_report import QuantumReport
 
-class Slam(Node):
+KM_PER_NMI = 1.852
 
+class FrameId:
+    RM_REPORT = 0x00010001
+    QUANTUM_REPORT = 0x00280002
+    QUANTUM_SPOKE = 0x00280003
+
+
+class Receiver(Node):
     def __init__(self):
-        super().__init__('slam')
+        super().__init__('receiver')
+        self.spoke_publisher = self.create_publisher(Spoke, 'topic_radar_spoke', 10)
         self.cli = self.create_client(RadarData, 'radar_data')
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
+
+        self.last_frame_id = 0
+        self.last_quantum_report = None
+        self.last_quantum_spoke = None
 
 
     def reqest_radar_data(self):
@@ -24,14 +38,14 @@ class Slam(Node):
 
 
     def process_frame(self, data: bytes):
-        self.get_logger().info(f'Processing {len(data)} bytes')
+        # self.get_logger().info(f'Processing {len(data)} bytes')
         # self.get_logger().debug(f'{data}')
         if len(data) < 4: return # data must be longer than 4 bytes
         
-        msg_id = struct.unpack('<I', data[:4])[0] # read first 4 bytes
+        self.last_frame_id = struct.unpack('<I', data[:4])[0] # read first 4 bytes
         
-        match msg_id:
-            case 0x00010001:
+        match self.last_frame_id:
+            case FrameId.RM_REPORT:
                 self.process_rm_report(data)
                 pass
             case 0x00010002:
@@ -40,12 +54,10 @@ class Slam(Node):
             case 0x00010003:
                 # ProcessScanData(data, len)
                 pass
-            case 0x00280003:
+            case FrameId.QUANTUM_SPOKE:
                 self.process_quantum_scan_data(data)
-                pass
-            case 0x00280002:
+            case FrameId.QUANTUM_REPORT:
                 self.process_quantum_report(data)
-                pass
             case 0x00280001:  # type and serial for Quantum radar
                 pass
                 # IF_serial = wxString::FromAscii(data + 10, 7)
@@ -115,6 +127,13 @@ class Slam(Node):
         qdata = QuantumScan.parse_data(data[20:])
         qs = QuantumScan(*qheader, qdata)
         self.get_logger().debug(f'{qs}')
+        
+        self.last_quantum_spoke = qs
+        
+        msg = Spoke()
+        msg.azimuth = qs.azimuth
+        msg.data = qs.data
+        self.spoke_publisher.publish(msg)
 
 
     def process_quantum_report(self, data: bytes):
@@ -122,18 +141,20 @@ class Slam(Node):
         
         bl = QuantumReport.parse_report(data[:260])
         qr = QuantumReport(*bl)
-        self.get_logger().debug(f'{qr}')
+        self.get_logger().info(f'{qr}')
+        
+        self.last_quantum_report = qr
 
 
 def main():
     rclpy.init()
 
-    slam = Slam()
+    receiver_node = Receiver()
     while True:
-        response = slam.reqest_radar_data()
-        slam.process_frame(response.data)
+        response = receiver_node.reqest_radar_data()
+        receiver_node.process_frame(response.data)
 
-    slam.destroy_node()
+    receiver_node.destroy_node()
     rclpy.shutdown()
 
 
