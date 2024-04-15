@@ -3,6 +3,8 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import NavSatFix
+from radar_interfaces.msg import Spoke
+
 import socket
 from PIL import Image as PilImage
 import io
@@ -34,6 +36,7 @@ class UDPSender(Node):
      
         self.create_subscription(Image, 'video_stream', self.video_stream_callback, video_stream_qos)
         self.create_subscription(NavSatFix, 'gps_data', self.gps_data_callback, gps_data_qos)
+        self.create_subscription(Spoke, 'topic_radar_spoke', self.radar_spoke_callback, 10)
         
         # UDP target IP and port
         #adjust ports as needed
@@ -63,6 +66,11 @@ class UDPSender(Node):
         gps_data_str = f"Latitude: {msg.latitude}, Longitude: {msg.longitude}, Altitude: {msg.altitude}"
         self.get_logger().info(f"sending to control station: {gps_data_str}")
         self.send_udp_data(gps_data_str, self.gps_data_port)
+
+    def radar_spoke_callback(self, spoke):
+        spoke_data_str = f'azimuth: {spoke.azimuth}, data: {spoke.data}'
+        self.get_logger().info(f"sending to control station: {spoke_data_str=}")
+        self.send_udp_data(spoke_data_str, self.gps_data_port)
 
 def main(args=None):
     rclpy.init(args=args)
