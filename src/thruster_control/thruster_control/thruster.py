@@ -50,6 +50,19 @@ class ThrusterControl(Node):
         if data_parts[0] == "ABS_Y":
             self.leftESC_pulsewidth = self.ESC_START_UP_VAL + round(int(data_parts[1]))
             self.rightESC_pulsewidth = self.ESC_START_UP_VAL + round(int(data_parts[1]))
+            # if(int(data_parts[1]) > 0): # if positive joystick
+            #     if(self.leftESC_pulsewidth >= 1850 or self.rightESC_pulsewidth >= 1850): # if at max, return
+            #         return
+            #     else: # otherwise increment
+            #         self.leftESC_pulsewidth += 25
+            #         self.rightESC_pulsewidth += 25
+            # if(int(data_parts[1]) < 0): # if negative joystick
+            #     if(self.leftESC_pulsewidth <= 1150 or self.rightESC_pulsewidth <= 1150):
+            #         return
+            #     else:
+            #         self.leftESC_pulsewidth -= 25
+            #         self.rightESC_pulsewidth -= 25
+            
         if data_parts[0] == "ABS_RX":
             self.leftESC_pulsewidth = self.ESC_START_UP_VAL + round(int(data_parts[1]))
             self.rightESC_pulsewidth = self.ESC_START_UP_VAL - round(int(data_parts[1]))
