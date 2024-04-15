@@ -42,6 +42,7 @@ class UDPSender(Node):
         #adjust ports as needed
         self.gps_data_port = 9001
         self.video_stream_port = 9002
+        self.radar_spoke_port = 9003
 
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -70,7 +71,7 @@ class UDPSender(Node):
     def radar_spoke_callback(self, spoke):
         spoke_data_str = f'azimuth: {spoke.azimuth}, data: {spoke.data}'
         self.get_logger().info(f"sending to control station: {spoke_data_str=}")
-        self.send_udp_data(spoke_data_str, self.gps_data_port)
+        self.send_udp_data(spoke_data_str, self.radar_spoke_port)
 
 def main(args=None):
     rclpy.init(args=args)
