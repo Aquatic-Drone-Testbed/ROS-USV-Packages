@@ -18,13 +18,13 @@ class Slam(Node):
         self.radar_spokes = None # buffer for storing radar spokes
         
         # publisher
-        self.publisher_ = self.create_publisher(
+        self.radar_control_publisher = self.create_publisher(
             String, 
             'topic_radar_control', 
             10)
         
         # subscriber
-        self.subscription = self.create_subscription(
+        self.radar_spoke_subscription = self.create_radar_spoke_subscription(
             Spoke,
             'topic_radar_spoke',
             self.radar_spoke_callback,
@@ -61,7 +61,7 @@ class Slam(Node):
         # turn on radar
         msg = String()
         msg.data = 'start_scan'
-        self.publisher_.publish(msg)
+        self.radar_control_publisher.publish(msg)
         
         # block until 250 spokes fill buffer
         while self.spokes_received < MAX_SPOKE_COUNT:
@@ -69,7 +69,7 @@ class Slam(Node):
         
         # turn off radar
         msg.data = 'stop_scan'
-        self.publisher_.publish(msg)
+        self.radar_control_publisher.publish(msg)
         
         radar_data = np.copy(self.radar_spokes/MAX_INTENSITY * 255).astype(np.uint8)
         
