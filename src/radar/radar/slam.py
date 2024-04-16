@@ -14,14 +14,22 @@ MAX_SPOKE_COUNT = 250
 class Slam(Node):
     def __init__(self):
         super().__init__('slam')
-        self.publisher_ = self.create_publisher(String, 'radar_control', 10)
+        
+        self.radar_spokes = None # buffer for storing radar spokes
+        
+        # publisher
+        self.publisher_ = self.create_publisher(
+            String, 
+            'topic_radar_control', 
+            10)
+        
+        # subscriber
         self.subscription = self.create_subscription(
             Spoke,
             'topic_radar_spoke',
             self.radar_spoke_callback,
             10)
-        
-        self.radar_spokes = None # buffer for storing radar spokes
+
 
     def radar_spoke_callback(self, spoke):
         self.get_logger().debug(f'Received spoke {spoke.azimuth}')

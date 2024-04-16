@@ -15,7 +15,6 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Spoke.msg"
-  "srv/RadarData.srv"
 )
 
 if(BUILD_TESTING)
