@@ -9,7 +9,7 @@ colcon build --symlink-install --packages-select radio
 if [ $? -eq 0 ]; then
     echo "build success..."
     source install/setup.bash
-    ros2 run radio receiver_udp
+    ros2 run radio receiver_udp --ros-args -p host:='0.0.0.0'
 else
     echo "build failed..."
     exit 1
