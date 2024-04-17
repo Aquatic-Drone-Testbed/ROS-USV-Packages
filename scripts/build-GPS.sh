@@ -1,17 +1,19 @@
 #!/bin/bash
-# Script for building GPS driver for ROS2
-# use this to gain permission to run the script for the first time: chmod +x scripts/build-GPS.sh
+# Script for building and running the GPS driver for ROS2 in non-systemd environments
 
-# build GPS driver
+# Start the gpsd daemon directly (adjust the device path as needed)
+sudo gpsd /dev/ttyACM0 -F /var/run/gpsd.sock
+
+# Build the GPS driver
 colcon build --symlink-install --packages-select gps_driver
 
-# check if build is successful
+# Check if build is successful
 if [ $? -eq 0 ]; then
-    echo "build success..."
+    echo "Build success..."
     source install/setup.bash
-    echo "running GPS driver node..."
+    echo "Running GPS driver node..."
     ros2 run gps_driver gps_node
 else
-    echo "build failed..."
+    echo "Build failed..."
     exit 1
 fi

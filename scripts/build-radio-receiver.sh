@@ -9,9 +9,7 @@ colcon build --symlink-install --packages-select radio
 if [ $? -eq 0 ]; then
     echo "build success..."
     source install/setup.bash
-    echo "please open two terminals for:"
-    echo "ros2 run radio sender_udp --ros-args -p target_ip:='10.223.75.164'"
-    echo "ros2 run radio receiver_udp"
+    ros2 run radio receiver_udp
 else
     echo "build failed..."
     exit 1
