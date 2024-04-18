@@ -9,11 +9,8 @@ colcon build --symlink-install --packages-select gps_driver
 
 # Check if build is successful
 if [ $? -eq 0 ]; then
-    echo "Build success..."
-    source install/setup.bash
-    echo "Running GPS driver node..."
-    ros2 run gps_driver gps_node
+    echo "GPS build success..."
 else
-    echo "Build failed..."
+    echo "GPS build failed..."
     exit 1
 fi
