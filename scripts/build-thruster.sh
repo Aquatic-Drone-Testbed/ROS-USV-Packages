@@ -14,3 +14,15 @@ cd ..
 rm master.zip
 sudo rm -rf pigpio-master
 sudo apt-get update && sudo apt-get upgrade -y
+
+
+# Build the thruster_control
+colcon build --symlink-install --packages-select thruster_control
+
+# Check if build is successful
+if [ $? -eq 0 ]; then
+    echo "thruster_control build success..."
+else
+    echo "thruster_control build failed..."
+    exit 1
+fi
