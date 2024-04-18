@@ -44,6 +44,10 @@ Run the following commands in separate terminals:
     ```bash
     ./run-video.sh
     ```
+- Start the thruster service:
+    ```bash
+    ./run-thruster.sh
+    ```
 - (TODO) Start the radar service:
     ```bash
     ./run-radar.sh
