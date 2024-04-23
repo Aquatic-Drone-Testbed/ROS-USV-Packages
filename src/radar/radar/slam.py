@@ -86,7 +86,8 @@ class Slam(Node):
             w (_type_): minimum polygon area threshold
             gamma (_type_): angular resolution to discretize the polar coordinate 
         """
-        I = self.generate_radar_image(r, K)
+        # I = self.generate_radar_image(r, K)
+        I = cv2.imread('/home/ws/test.png', cv2.IMREAD_GRAYSCALE)
         D = self.detect_contour(self.filter_image(I))
         P = self.extract_coastline(D, w, gamma, K)
         
@@ -125,6 +126,7 @@ class Slam(Node):
             dsize=(4*MAX_SPOKE_LENGTH, 4*MAX_SPOKE_LENGTH), 
             center=(2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH), 
             maxRadius=2*MAX_SPOKE_LENGTH, flags=cv2.WARP_INVERSE_MAP)
+        radar_image = cv2.rotate(radar_image, cv2.ROTATE_90_CLOCKWISE)
         
         # self.get_logger().info(f'{radar_image=} {radar_image.shape}')
         cv2.imshow('cartesian image', radar_image); cv2.waitKey(0)
@@ -143,9 +145,17 @@ class Slam(Node):
         Returns:
             _type_: _description_
         """
+        cv2.imshow('radar image', radar_image); cv2.waitKey(0)
+        
         # [TODO]: apply morphological and bilateral filters
-        INTENSITY_THRESHOLD = 0 # [TODO]: adjust threshold intensity value. range:[0,255]
-        _, filtered_radar_image = cv2.threshold(radar_image, INTENSITY_THRESHOLD, 255, cv2.THRESH_BINARY)
+        opening = cv2.morphologyEx(radar_image, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+        cv2.imshow('opening image', opening); cv2.waitKey(0)
+        
+        bilateral = cv2.bilateralFilter(opening, 9, 400, 400)
+        cv2.imshow('bilateral image', bilateral); cv2.waitKey(0)
+        
+        # [TODO]: adjust threshold intensity value. range:[0,255]
+        _, filtered_radar_image = cv2.threshold(bilateral, 128, 255, cv2.THRESH_BINARY)
         cv2.imshow('filtered image', filtered_radar_image); cv2.waitKey(0)
         
         return filtered_radar_image
@@ -176,8 +186,8 @@ def main():
     rclpy.init()
 
     slam_node = Slam()
-    radar_data = slam_node.get_radar_data()
-    # radar_data = slam_node.get_random_radar_data()
+    # radar_data = slam_node.get_radar_data()
+    radar_data = slam_node.get_random_radar_data()
     slam_node.generate_map(r=radar_data, k=None, p=None, K=None, w=None, gamma=None)
     slam_node.destroy_node()
     rclpy.shutdown()
