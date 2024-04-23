@@ -134,7 +134,7 @@ class Slam(Node):
         return radar_image
 
 
-    def filter_image(self, radar_image):
+    def filter_image(self, radar_image, binary_threshold=128):
         """apply morphological and bilateral filters for denoising
         and convert grayscale radar_image to binary image according to 
         predetermined threshold intensity value
@@ -155,13 +155,13 @@ class Slam(Node):
         cv2.imshow('bilateral image', bilateral); cv2.waitKey(0)
         
         # [TODO]: adjust threshold intensity value. range:[0,255]
-        _, filtered_radar_image = cv2.threshold(bilateral, 128, 255, cv2.THRESH_BINARY)
-        cv2.imshow('filtered image', filtered_radar_image); cv2.waitKey(0)
+        _, binary_image = cv2.threshold(bilateral, binary_threshold, 255, cv2.THRESH_BINARY)
+        cv2.imshow('filtered image', binary_image); cv2.waitKey(0)
         
-        return filtered_radar_image
+        return binary_image
 
 
-    def detect_contour(self, binary_image):
+    def detect_contour(self, binary_image, area_threshold=50):
         """extract the contours from the binary image using polygon extraction
 
         Args:
@@ -171,11 +171,15 @@ class Slam(Node):
             _type_: _description_
         """
         # [TODO]: extract the contours from the binary image using polygon extraction
+        
         contours, hierarchy = cv2.findContours(binary_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        landmasses = [cnt for cnt in contours if cv2.contourArea(cnt) > area_threshold]
         
         img = cv2.cvtColor(binary_image, cv2.COLOR_GRAY2RGB) 
-        cv2.drawContours(img, contours, -1, (0,255,0), 3)
+        cv2.drawContours(img, landmasses, -1, (0,255,0), 3)
         cv2.imshow('contoured image', img); cv2.waitKey(0)
+        
+        return landmasses
 
 
     def extract_coastline(self, D, w, gamma, K):
