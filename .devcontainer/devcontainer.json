@@ -25,8 +25,11 @@
     // 5800 = radar locate (working)
     // 2574 = radar data
     // 2575 = radar command
-    // 20000 = radio (arbitrarily selected)
-    "appPort": ["5800:5800/udp", "2575:2575/udp", "2574:2574/udp", "20000:20000/udp", "20000:20000/tcp"],
+    // 9000 = control signal    (control station -> UDP -> boat)
+    // 9001 = GPS data          (boat -> UDP -> control station)
+    // 9001 = camera data          (boat -> UDP -> control station)
+    // 20000 = radio (arbitrarily selected, not used anymore, it's a backdoor port now)
+    "appPort": ["5800:5800/udp", "2575:2575/udp", "2574:2574/udp", "9000:9000/udp", "9001:9001/udp", "9002:9002/udp", "20000:20000/tcp"],
     "runArgs": [
         "--net=host",
         "--privileged",
