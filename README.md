@@ -48,7 +48,7 @@ Run the following commands in separate terminals:
     ```bash
     ./run-thruster.sh
     ```
-- (TODO) Start the radar service:
+- Start the radar service:
     ```bash
     ./run-radar.sh
     ```
