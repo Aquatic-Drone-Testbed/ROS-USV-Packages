@@ -25,15 +25,11 @@ class GPSDriverNode(Node):
                         gps_msg.altitude = report.alt
                     self.publisher_.publish(gps_msg)
                     self.get_logger().info(f"Published real GPS data:\n{gps_msg}")
-                else:
-                    gps_msg = NavSatFix()
-                    # hard coded for testing indoor
-                    gps_msg.latitude = 111.11
-                    gps_msg.longitude = 222.22
-                    gps_msg.altitude = 333.33
-                    self.publisher_.publish(gps_msg)
-                    self.get_logger().info(f"Published fake GPS data:\n{gps_msg}")
-        except StopIteration:
+                self.get_logger().info(f"Fix found, no lat & log")
+            else:
+                self.get_logger().info(f"no fix")
+        except Exception as e:
+            self.get_logger().error(f"An error occurred: {e}")
             self.get_logger().warn('GPSD has terminated')
 
 def main(args=None):
