@@ -40,7 +40,7 @@ class Slam(Node):
         
         # logging
         # self.get_logger().info(f'{self.radar_spokes=} {self.radar_spokes.shape}')
-        cv2.imshow('polar image', radar_data); cv2.waitKey(0)
+        # cv2.imshow('polar image', radar_data); cv2.waitKey(0)
         
         return radar_data
 
@@ -67,14 +67,14 @@ class Slam(Node):
         
         # logging
         # self.get_logger().info(f'{self.radar_spokes=} {self.radar_spokes.shape}')
-        cv2.imshow('polar image', radar_data); cv2.waitKey(0)
+        # cv2.imshow('polar image', radar_data); cv2.waitKey(0)
         
         self.radar_spokes = None # clear buffer
         
         return radar_data
 
 
-    def generate_map(self, r, k, p, K, w, gamma):
+    def generate_map(self, r, k, p, K, area_threshold, gamma):
         """Coastline Extraction and Parameterization algorithm from
         https://ieeexplore.ieee.org/document/8600301
 
@@ -83,13 +83,13 @@ class Slam(Node):
             k (_type_): spline curve degree
             p (_type_): knot spacing
             K (_type_): coordinate transformation matrix
-            w (_type_): minimum polygon area threshold
+            area_threshold (_type_): minimum polygon area threshold
             gamma (_type_): angular resolution to discretize the polar coordinate 
         """
         # I = self.generate_radar_image(r, K)
         I = cv2.imread('/home/ws/test.png', cv2.IMREAD_GRAYSCALE)
         D = self.detect_contour(self.filter_image(I))
-        P = self.extract_coastline(D, w, gamma, K)
+        P = self.extract_coastline(D, area_threshold, gamma, K)
         
         # psuedocode
         # P={P1,…,Pn} , F⟵∅
@@ -123,9 +123,9 @@ class Slam(Node):
         """
         radar_image = cv2.warpPolar(
             src=radar_data, 
-            dsize=(4*MAX_SPOKE_LENGTH, 4*MAX_SPOKE_LENGTH), 
-            center=(2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH), 
-            maxRadius=2*MAX_SPOKE_LENGTH, flags=cv2.WARP_INVERSE_MAP)
+            dsize=(2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH), 
+            center=(MAX_SPOKE_LENGTH, MAX_SPOKE_LENGTH), 
+            maxRadius=MAX_SPOKE_LENGTH, flags=cv2.WARP_INVERSE_MAP)
         radar_image = cv2.rotate(radar_image, cv2.ROTATE_90_CLOCKWISE)
         
         # self.get_logger().info(f'{radar_image=} {radar_image.shape}')
@@ -134,7 +134,7 @@ class Slam(Node):
         return radar_image
 
 
-    def filter_image(self, radar_image, binary_threshold=128):
+    def filter_image(self, radar_image, binary_threshold=0):
         """apply morphological and bilateral filters for denoising
         and convert grayscale radar_image to binary image according to 
         predetermined threshold intensity value
@@ -148,20 +148,22 @@ class Slam(Node):
         cv2.imshow('radar image', radar_image); cv2.waitKey(0)
         
         # [TODO]: apply morphological and bilateral filters
-        opening = cv2.morphologyEx(radar_image, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-        cv2.imshow('opening image', opening); cv2.waitKey(0)
+        erosion = cv2.erode(radar_image, np.ones((3, 3), np.uint8), iterations=2)
+        cv2.imshow('erosion', erosion); cv2.waitKey(0)
+        dilation = cv2.dilate(erosion, np.ones((3, 3), np.uint8), iterations=5)
+        cv2.imshow('dilation', dilation); cv2.waitKey(0)
         
-        bilateral = cv2.bilateralFilter(opening, 9, 400, 400)
-        cv2.imshow('bilateral image', bilateral); cv2.waitKey(0)
+        bilateral = cv2.bilateralFilter(dilation, 5, 150, 150)
+        cv2.imshow('bilateral', bilateral); cv2.waitKey(0)
         
         # [TODO]: adjust threshold intensity value. range:[0,255]
         _, binary_image = cv2.threshold(bilateral, binary_threshold, 255, cv2.THRESH_BINARY)
-        cv2.imshow('filtered image', binary_image); cv2.waitKey(0)
+        cv2.imshow('threshold', binary_image); cv2.waitKey(0)
         
         return binary_image
 
 
-    def detect_contour(self, binary_image, area_threshold=50):
+    def detect_contour(self, binary_image):
         """extract the contours from the binary image using polygon extraction
 
         Args:
@@ -173,17 +175,35 @@ class Slam(Node):
         # [TODO]: extract the contours from the binary image using polygon extraction
         
         contours, hierarchy = cv2.findContours(binary_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        return contours
+
+
+    def extract_coastline(self, contours, area_threshold=50, angular_resolution=None, K=None):
         landmasses = [cnt for cnt in contours if cv2.contourArea(cnt) > area_threshold]
         
-        img = cv2.cvtColor(binary_image, cv2.COLOR_GRAY2RGB) 
-        cv2.drawContours(img, landmasses, -1, (0,255,0), 3)
-        cv2.imshow('contoured image', img); cv2.waitKey(0)
+        img = np.zeros((4*MAX_SPOKE_LENGTH, 4*MAX_SPOKE_LENGTH, 3), dtype=np.uint8)
+        cv2.drawContours(img, landmasses, -1, (255,255,255), -1)
+        cv2.imshow('contour', img); cv2.waitKey(0)
+        
+        height, width = img.shape[:2]
+        polar = cv2.warpPolar(src=img, dsize=(MAX_SPOKE_LENGTH, 0), center=(width/2, height/2), maxRadius=width/2, flags=cv2.WARP_POLAR_LINEAR)
+        polar = cv2.cvtColor(polar, cv2.COLOR_BGR2GRAY)
+        cv2.imshow('polar', polar); cv2.waitKey(0)
+        
+        for spoke in polar:
+            spoke[np.argmax(spoke > 0)+1:] = 0
+        
+        cv2.imshow('coastline polar', polar); cv2.waitKey(0)
+        
+        coastline = cv2.warpPolar(
+            src=polar, 
+            dsize=(2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH), 
+            center=(MAX_SPOKE_LENGTH, MAX_SPOKE_LENGTH), 
+            maxRadius=MAX_SPOKE_LENGTH, flags=cv2.WARP_INVERSE_MAP)
+        
+        cv2.imshow('coastline', coastline); cv2.waitKey(0)
         
         return landmasses
-
-
-    def extract_coastline(self, D, w, gamma, K):
-        pass
 
 
 def main():
@@ -192,7 +212,7 @@ def main():
     slam_node = Slam()
     # radar_data = slam_node.get_radar_data()
     radar_data = slam_node.get_random_radar_data()
-    slam_node.generate_map(r=radar_data, k=None, p=None, K=None, w=None, gamma=None)
+    slam_node.generate_map(r=radar_data, k=None, p=None, K=None, area_threshold=50, gamma=None)
     slam_node.destroy_node()
     rclpy.shutdown()
 
