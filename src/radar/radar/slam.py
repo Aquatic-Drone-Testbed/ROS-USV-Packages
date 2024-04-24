@@ -86,10 +86,15 @@ class Slam(Node):
             area_threshold (_type_): minimum polygon area threshold
             gamma (_type_): angular resolution to discretize the polar coordinate 
         """
-        # I = self.generate_radar_image(r, K)
-        I = cv2.imread('/home/ws/test.png', cv2.IMREAD_GRAYSCALE)
-        D = self.detect_contour(self.filter_image(I))
-        P = self.extract_coastline(D, area_threshold, gamma, K)
+        I = self.generate_radar_image(r, K)
+        # I = cv2.imread('/home/ws/test.png', cv2.IMREAD_GRAYSCALE)
+        D = self.detect_contour(self.filter_image(I,binary_threshold=64))
+        P = self.extract_coastline(D, area_threshold=10, angular_resolution=None, K=None)
+        
+        final = cv2.cvtColor(I,cv2.COLOR_GRAY2RGB)
+        print(final.shape)
+        print(P.shape)
+        cv2.imshow('final', final); cv2.waitKey(0)
         
         # psuedocode
         # P={P1,…,Pn} , F⟵∅
@@ -129,12 +134,12 @@ class Slam(Node):
         radar_image = cv2.rotate(radar_image, cv2.ROTATE_90_CLOCKWISE)
         
         # self.get_logger().info(f'{radar_image=} {radar_image.shape}')
-        cv2.imshow('cartesian image', radar_image); cv2.waitKey(0)
+        cv2.imshow('raw image', radar_image); cv2.waitKey(0)
         
         return radar_image
 
 
-    def filter_image(self, radar_image, binary_threshold=0):
+    def filter_image(self, radar_image, binary_threshold):
         """apply morphological and bilateral filters for denoising
         and convert grayscale radar_image to binary image according to 
         predetermined threshold intensity value
@@ -145,15 +150,14 @@ class Slam(Node):
         Returns:
             _type_: _description_
         """
-        cv2.imshow('radar image', radar_image); cv2.waitKey(0)
         
         # [TODO]: apply morphological and bilateral filters
-        erosion = cv2.erode(radar_image, np.ones((3, 3), np.uint8), iterations=2)
+        erosion = cv2.erode(radar_image, np.ones((3, 3), np.uint8), iterations=1)
         cv2.imshow('erosion', erosion); cv2.waitKey(0)
-        dilation = cv2.dilate(erosion, np.ones((3, 3), np.uint8), iterations=5)
+        dilation = cv2.dilate(erosion, np.ones((3, 3), np.uint8), iterations=3)
         cv2.imshow('dilation', dilation); cv2.waitKey(0)
         
-        bilateral = cv2.bilateralFilter(dilation, 5, 150, 150)
+        bilateral = cv2.bilateralFilter(dilation, 9, 150, 150)
         cv2.imshow('bilateral', bilateral); cv2.waitKey(0)
         
         # [TODO]: adjust threshold intensity value. range:[0,255]
@@ -178,10 +182,10 @@ class Slam(Node):
         return contours
 
 
-    def extract_coastline(self, contours, area_threshold=50, angular_resolution=None, K=None):
+    def extract_coastline(self, contours, area_threshold, angular_resolution=None, K=None):
         landmasses = [cnt for cnt in contours if cv2.contourArea(cnt) > area_threshold]
         
-        img = np.zeros((4*MAX_SPOKE_LENGTH, 4*MAX_SPOKE_LENGTH, 3), dtype=np.uint8)
+        img = np.zeros((2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH, 3), dtype=np.uint8)
         cv2.drawContours(img, landmasses, -1, (255,255,255), -1)
         cv2.imshow('contour', img); cv2.waitKey(0)
         
@@ -203,15 +207,15 @@ class Slam(Node):
         
         cv2.imshow('coastline', coastline); cv2.waitKey(0)
         
-        return landmasses
+        return coastline
 
 
 def main():
     rclpy.init()
 
     slam_node = Slam()
-    # radar_data = slam_node.get_radar_data()
-    radar_data = slam_node.get_random_radar_data()
+    radar_data = slam_node.get_radar_data()
+    # radar_data = slam_node.get_random_radar_data()
     slam_node.generate_map(r=radar_data, k=None, p=None, K=None, area_threshold=50, gamma=None)
     slam_node.destroy_node()
     rclpy.shutdown()
