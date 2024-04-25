@@ -24,7 +24,10 @@ RUN apt-get install -y python3-smbus
 RUN groupadd -f -r i2c && \
     usermod -a -G i2c seamate-docker
 ENV SHELL /bin/bash
-
+#For EKF robot localization 
+RUN apt-get install -y ros-humble-angles
+RUN apt-get install ros-humble-diagnostic-updater
+RUN apt-get install ros-humble-geographic-msgs
 # Copy scripts and set permissions
 COPY /home/ws/scripts/build-ekf.sh /home/$USERNAME/scripts/build-ekf.sh
 COPY /home/ws/scripts/build-imu.sh /home/$USERNAME/scripts/build-imu.sh

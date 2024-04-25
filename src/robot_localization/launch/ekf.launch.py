@@ -32,4 +32,18 @@ def generate_launch_description():
             output='screen',
             parameters=[os.path.join(get_package_share_directory("robot_localization"), 'params', 'ekf.yaml')],
            ),
+        launch_ros.actions.Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='odom_to_bno055',
+            arguments=['0', '0', '0', '0', '0', '0', 'odom', 'bno055'],
+            output='screen'
+        ),
+        launch_ros.actions.Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='bno055_to_base_link',
+            arguments=['0', '0', '0', '0', '0', '0', '1', 'bno055', 'base_link'],
+            output='screen'
+        ),
 ])
