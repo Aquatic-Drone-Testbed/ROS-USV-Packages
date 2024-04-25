@@ -88,7 +88,8 @@ class Slam(Node):
         """
         I = self.generate_radar_image(r, K)
         # I = cv2.imread('/home/ws/test.png', cv2.IMREAD_GRAYSCALE)
-        D = self.detect_contour(self.filter_image(I,binary_threshold=64))
+        # I = cv2.resize(I, None, fx=0.5, fy=0.5)
+        D = self.detect_contour(self.filter_image(I,binary_threshold=128))
         P = self.extract_coastline(D, area_threshold=10, angular_resolution=None, K=None)
         
         final = cv2.cvtColor(I,cv2.COLOR_GRAY2RGB)
@@ -154,10 +155,10 @@ class Slam(Node):
         # [TODO]: apply morphological and bilateral filters
         erosion = cv2.erode(radar_image, np.ones((3, 3), np.uint8), iterations=1)
         cv2.imshow('erosion', erosion); cv2.waitKey(0)
-        dilation = cv2.dilate(erosion, np.ones((3, 3), np.uint8), iterations=3)
+        dilation = cv2.dilate(erosion, np.ones((3, 3), np.uint8), iterations=1)
         cv2.imshow('dilation', dilation); cv2.waitKey(0)
         
-        bilateral = cv2.bilateralFilter(dilation, 9, 150, 150)
+        bilateral = cv2.bilateralFilter(dilation, 9, 100, 100)
         cv2.imshow('bilateral', bilateral); cv2.waitKey(0)
         
         # [TODO]: adjust threshold intensity value. range:[0,255]
