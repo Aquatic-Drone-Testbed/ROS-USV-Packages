@@ -36,6 +36,27 @@ class Slam(Node):
         self.spokes_received += 1
 
 
+    def run(self):
+        self.get_logger().info(f'Start SLAM')
+        
+        # turn on radar
+        radar_control_msg = String()
+        radar_control_msg.data = 'start_scan'
+        self.publisher_.publish(radar_control_msg)
+        
+        try:
+            while True:
+                radar_data = self.get_radar_data()
+                # radar_data = slam_node.get_random_radar_data()
+                self.generate_map(r=radar_data, k=None, p=None, K=None, area_threshold=50, gamma=None)
+        except KeyboardInterrupt:
+            self.get_logger().info(f'Stop SLAM')
+        
+        # turn off radar
+        radar_control_msg.data = 'stop_scan'
+        self.publisher_.publish(radar_control_msg)
+
+
     def get_random_radar_data(self):
         # initialize buffer to store radar spoke data
         self.radar_spokes = np.random.uniform(low=0, high=MAX_INTENSITY, size=(250, MAX_SPOKE_LENGTH)) # random spokes
@@ -55,18 +76,9 @@ class Slam(Node):
         self.radar_spokes = np.zeros((MAX_SPOKE_COUNT, MAX_SPOKE_LENGTH), np.uint8)
         self.spokes_received = 0
         
-        # turn on radar
-        msg = String()
-        msg.data = 'start_scan'
-        self.publisher_.publish(msg)
-        
         # block until 250 spokes fill buffer
         while self.spokes_received < MAX_SPOKE_COUNT:
             rclpy.spin_once(self)
-        
-        # turn off radar
-        msg.data = 'stop_scan'
-        self.publisher_.publish(msg)
         
         radar_data = np.copy(self.radar_spokes/MAX_INTENSITY * 255).astype(np.uint8)
         
@@ -225,9 +237,7 @@ def main():
     rclpy.init()
 
     slam_node = Slam()
-    radar_data = slam_node.get_radar_data()
-    # radar_data = slam_node.get_random_radar_data()
-    slam_node.generate_map(r=radar_data, k=None, p=None, K=None, area_threshold=50, gamma=None)
+    slam_node.run()
     slam_node.destroy_node()
     rclpy.shutdown()
 
