@@ -33,6 +33,7 @@ class UDPSender(Node):
         )
      
         self.create_subscription(Image, 'video_stream', self.video_stream_callback, video_stream_qos)
+        self.create_subscription(Image, 'radar_image', self.video_stream_callback, video_stream_qos)
         self.create_subscription(NavSatFix, 'gps_data', self.gps_data_callback, gps_data_qos)
         
         # UDP target IP and port
