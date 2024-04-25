@@ -102,6 +102,7 @@ class Slam(Node):
         print(P.shape)
         # cv2.imshow('final', final); cv2.waitKey(0)
         
+        # self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(I, encoding="passthrough"))
         self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(P, encoding="passthrough"))
         self.get_logger().info(f'Published coastline image')
 
