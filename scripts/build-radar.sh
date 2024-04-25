@@ -2,6 +2,7 @@
 # Script for building video streaming package
 
 ./scripts/rosdep.sh
+pip install cv_bridge
 colcon build --symlink-install --packages-select radar_interfaces radar
 
 # Check if build is successful

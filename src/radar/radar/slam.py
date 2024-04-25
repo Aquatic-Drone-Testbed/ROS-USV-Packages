@@ -1,11 +1,13 @@
 import numpy as np
 import cv2
+from cv_bridge import CvBridge
 
 import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import String
 from radar_interfaces.msg import Spoke
+from sensor_msgs.msg import Image
 
 MAX_SPOKE_LENGTH = 256
 MAX_INTENSITY = 128
@@ -14,6 +16,7 @@ MAX_SPOKE_COUNT = 250
 class Slam(Node):
     def __init__(self):
         super().__init__('slam')
+        self.image_publisher_ = self.create_publisher(Image, 'radar_image', 10)
         self.publisher_ = self.create_publisher(String, 'radar_control', 10)
         self.subscription = self.create_subscription(
             Spoke,
@@ -22,6 +25,8 @@ class Slam(Node):
             10)
         
         self.radar_spokes = None # buffer for storing radar spokes
+        self.bridge = CvBridge()
+
 
     def radar_spoke_callback(self, spoke):
         self.get_logger().debug(f'Received spoke {spoke.azimuth}')
@@ -86,17 +91,21 @@ class Slam(Node):
             area_threshold (_type_): minimum polygon area threshold
             gamma (_type_): angular resolution to discretize the polar coordinate 
         """
-        I = self.generate_radar_image(r, K)
-        # I = cv2.imread('/home/ws/test.png', cv2.IMREAD_GRAYSCALE)
-        # I = cv2.resize(I, None, fx=0.5, fy=0.5)
+        # I = self.generate_radar_image(r, K)
+        I = cv2.imread('/home/ws/test.png', cv2.IMREAD_GRAYSCALE)
+        I = cv2.resize(I, None, fx=0.5, fy=0.5)
         D = self.detect_contour(self.filter_image(I,binary_threshold=128))
         P = self.extract_coastline(D, area_threshold=10, angular_resolution=None, K=None)
         
         final = cv2.cvtColor(I,cv2.COLOR_GRAY2RGB)
         print(final.shape)
         print(P.shape)
-        cv2.imshow('final', final); cv2.waitKey(0)
+        # cv2.imshow('final', final); cv2.waitKey(0)
         
+        self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(P, encoding="passthrough"))
+        self.get_logger().info(f'Published coastline image')
+
+
         # psuedocode
         # P={P1,…,Pn} , F⟵∅
 
@@ -135,7 +144,7 @@ class Slam(Node):
         radar_image = cv2.rotate(radar_image, cv2.ROTATE_90_CLOCKWISE)
         
         # self.get_logger().info(f'{radar_image=} {radar_image.shape}')
-        cv2.imshow('raw image', radar_image); cv2.waitKey(0)
+        # cv2.imshow('raw image', radar_image); cv2.waitKey(0)
         
         return radar_image
 
@@ -154,16 +163,16 @@ class Slam(Node):
         
         # [TODO]: apply morphological and bilateral filters
         erosion = cv2.erode(radar_image, np.ones((3, 3), np.uint8), iterations=1)
-        cv2.imshow('erosion', erosion); cv2.waitKey(0)
+        # cv2.imshow('erosion', erosion); cv2.waitKey(0)
         dilation = cv2.dilate(erosion, np.ones((3, 3), np.uint8), iterations=1)
-        cv2.imshow('dilation', dilation); cv2.waitKey(0)
+        # cv2.imshow('dilation', dilation); cv2.waitKey(0)
         
         bilateral = cv2.bilateralFilter(dilation, 9, 100, 100)
-        cv2.imshow('bilateral', bilateral); cv2.waitKey(0)
+        # cv2.imshow('bilateral', bilateral); cv2.waitKey(0)
         
         # [TODO]: adjust threshold intensity value. range:[0,255]
         _, binary_image = cv2.threshold(bilateral, binary_threshold, 255, cv2.THRESH_BINARY)
-        cv2.imshow('threshold', binary_image); cv2.waitKey(0)
+        # cv2.imshow('threshold', binary_image); cv2.waitKey(0)
         
         return binary_image
 
@@ -188,17 +197,17 @@ class Slam(Node):
         
         img = np.zeros((2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH, 3), dtype=np.uint8)
         cv2.drawContours(img, landmasses, -1, (255,255,255), -1)
-        cv2.imshow('contour', img); cv2.waitKey(0)
+        # cv2.imshow('contour', img); cv2.waitKey(0)
         
         height, width = img.shape[:2]
         polar = cv2.warpPolar(src=img, dsize=(MAX_SPOKE_LENGTH, 0), center=(width/2, height/2), maxRadius=width/2, flags=cv2.WARP_POLAR_LINEAR)
         polar = cv2.cvtColor(polar, cv2.COLOR_BGR2GRAY)
-        cv2.imshow('polar', polar); cv2.waitKey(0)
+        # cv2.imshow('polar', polar); cv2.waitKey(0)
         
         for spoke in polar:
             spoke[np.argmax(spoke > 0)+1:] = 0
         
-        cv2.imshow('coastline polar', polar); cv2.waitKey(0)
+        # cv2.imshow('coastline polar', polar); cv2.waitKey(0)
         
         coastline = cv2.warpPolar(
             src=polar, 
@@ -206,7 +215,7 @@ class Slam(Node):
             center=(MAX_SPOKE_LENGTH, MAX_SPOKE_LENGTH), 
             maxRadius=MAX_SPOKE_LENGTH, flags=cv2.WARP_INVERSE_MAP)
         
-        cv2.imshow('coastline', coastline); cv2.waitKey(0)
+        # cv2.imshow('coastline', coastline); cv2.waitKey(0)
         
         return coastline
 
@@ -215,8 +224,8 @@ def main():
     rclpy.init()
 
     slam_node = Slam()
-    radar_data = slam_node.get_radar_data()
-    # radar_data = slam_node.get_random_radar_data()
+    # radar_data = slam_node.get_radar_data()
+    radar_data = slam_node.get_random_radar_data()
     slam_node.generate_map(r=radar_data, k=None, p=None, K=None, area_threshold=50, gamma=None)
     slam_node.destroy_node()
     rclpy.shutdown()
