@@ -86,9 +86,9 @@ class Slam(Node):
             area_threshold (_type_): minimum polygon area threshold
             gamma (_type_): angular resolution to discretize the polar coordinate 
         """
-        # I = self.generate_radar_image(r, K)
-        I = cv2.imread('/home/ws/test.png', cv2.IMREAD_GRAYSCALE)
-        I = cv2.resize(I, None, fx=0.5, fy=0.5)
+        I = self.generate_radar_image(r, K)
+        # I = cv2.imread('/home/ws/test.png', cv2.IMREAD_GRAYSCALE)
+        # I = cv2.resize(I, None, fx=0.5, fy=0.5)
         D = self.detect_contour(self.filter_image(I,binary_threshold=128))
         P = self.extract_coastline(D, area_threshold=10, angular_resolution=None, K=None)
         
@@ -215,8 +215,8 @@ def main():
     rclpy.init()
 
     slam_node = Slam()
-    # radar_data = slam_node.get_radar_data()
-    radar_data = slam_node.get_random_radar_data()
+    radar_data = slam_node.get_radar_data()
+    # radar_data = slam_node.get_random_radar_data()
     slam_node.generate_map(r=radar_data, k=None, p=None, K=None, area_threshold=50, gamma=None)
     slam_node.destroy_node()
     rclpy.shutdown()
