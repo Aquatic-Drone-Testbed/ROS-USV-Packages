@@ -1,2 +1,0 @@
-ros2 topic pub /radar_control std_msgs/String '{data: start_scan}' -1
-ros2 topic pub /radar_control std_msgs/String '{data: stop_scan}' -1
