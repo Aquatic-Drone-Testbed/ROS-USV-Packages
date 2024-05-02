@@ -33,12 +33,14 @@ class UDPSender(Node):
         )
      
         self.create_subscription(Image, 'video_stream', self.video_stream_callback, video_stream_qos)
+        self.create_subscription(Image, 'radar_image', self.radar_stream_callback, video_stream_qos)
         self.create_subscription(NavSatFix, 'gps_data', self.gps_data_callback, gps_data_qos)
         
         # UDP target IP and port
         #adjust ports as needed
         self.gps_data_port = 9001
         self.video_stream_port = 9002
+        self.radar_stream_port = 9003
 
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -59,6 +61,14 @@ class UDPSender(Node):
         compressed_img = buffer.getvalue()
         self.send_udp_data(compressed_img, self.video_stream_port)
 
+    def radar_stream_callback(self, msg):
+        cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+        pil_image = PilImage.fromarray(cv_image)
+        buffer = io.BytesIO()
+        pil_image.save(buffer, format='JPEG', quality=10)
+        compressed_img = buffer.getvalue()
+        self.send_udp_data(compressed_img, self.radar_stream_port)
+        
     def gps_data_callback(self, msg):
         gps_data_str = f"Latitude: {msg.latitude}, Longitude: {msg.longitude}, Altitude: {msg.altitude}"
         self.get_logger().info(f"sending to control station: {gps_data_str}")

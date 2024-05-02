@@ -16,14 +16,50 @@ Environment setup is based on [ROS2 Community Guide](https://docs.ros.org/en/hum
 1. run `git submodule update --init --recursive` to clone all the submodules
 2. run `colcon build`
 
-## Camera Things
+## Instruction to Build at frist time
 
-1. Run build-video.sh
-2. Run rosdep.sh
-3. Build video/radio packages
-4. If it says no permission, need to add the user to the video group
-5. sudo usermod -a -G video $USER
-6. Power cycle, should be fine. To test, do ls /dev/video\* and you should see some directories appear that don't appear when camera isn't plugged in
-7. ros2 run video_stream_py video_publisher
-8. ros2 run radio sender_udp
-9. On control station, run image_receive.py
+1. Run the build script:
+    ```bash
+    ./scripts/build-all.sh
+    ```
+
+2. (Optional) If you encounter a permission error, add your user to the video group:
+    ```bash
+    sudo usermod -a -G video $USER
+    ```
+
+3. (Optional) Power cycle your system. To verify the camera is recognized post-power cycle, run the following command to see directories that should appear when the camera is connected:
+    ```bash
+    ls /dev/video*
+    ```
+
+# Instruction to Run
+
+Run the following commands in separate terminals:
+- Start the GPS service:
+    ```bash
+    ./run-gps.sh
+    ```
+- Start the video service:
+    ```bash
+    ./run-video.sh
+    ```
+- Start the thruster service:
+    ```bash
+    ./run-thruster.sh
+    ```
+- Start the radar service:
+    ```bash
+    ./run-radar.sh
+    ```
+- Start the radio sender service:
+    ```bash
+    ./run-radio-sender.sh
+    ```
+- Start the radio receiver service:
+    ```bash
+    ./run-radio-receiver.sh
+    ```
+
+
+

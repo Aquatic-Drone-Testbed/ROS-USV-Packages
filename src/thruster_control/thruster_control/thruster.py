@@ -18,7 +18,9 @@ class ThrusterControl(Node):
 
     def __init__(self):
         super().__init__('thruster_control')
-        
+        self.base_thrust = 0
+        self.delta_thrust = 0
+
         self.subscription = self.create_subscription(
             String, 
             'thruster_control', 
@@ -44,29 +46,22 @@ class ThrusterControl(Node):
         print(f"{'Timestamp':<20} | {'Left ESC Pulsewidth':<17} | {'Right ESC Pulsewidth'}")
         print("-" * 60)  # Print a separator line
 
+
+
     def listener_callback(self, msg):
         #Adjust thruster values
         data_parts = msg.data.split(',')
         if data_parts[0] == "ABS_Y":
-            self.leftESC_pulsewidth = self.ESC_START_UP_VAL + round(int(data_parts[1]))
-            self.rightESC_pulsewidth = self.ESC_START_UP_VAL + round(int(data_parts[1]))
-            # if(int(data_parts[1]) > 0): # if positive joystick
-            #     if(self.leftESC_pulsewidth >= 1850 or self.rightESC_pulsewidth >= 1850): # if at max, return
-            #         return
-            #     else: # otherwise increment
-            #         self.leftESC_pulsewidth += 25
-            #         self.rightESC_pulsewidth += 25
-            # if(int(data_parts[1]) < 0): # if negative joystick
-            #     if(self.leftESC_pulsewidth <= 1150 or self.rightESC_pulsewidth <= 1150):
-            #         return
-            #     else:
-            #         self.leftESC_pulsewidth -= 25
-            #         self.rightESC_pulsewidth -= 25
+            self.base_thrust = round(int(data_parts[1]))/350 # -1 to 1
             
-        if data_parts[0] == "ABS_RX":
-            self.leftESC_pulsewidth = self.ESC_START_UP_VAL + round(int(data_parts[1]))
-            self.rightESC_pulsewidth = self.ESC_START_UP_VAL - round(int(data_parts[1]))
+        if data_parts[0] == "ABS_X":    
+            self.delta_thrust = round(int(data_parts[1]))/350 # -1 to 1
 
+        leftVal = self.ESC_START_UP_VAL + 350 * (self.base_thrust + self.delta_thrust)
+        rightVal = self.ESC_START_UP_VAL + 350 * (self.base_thrust - self.delta_thrust)
+        
+        self.leftESC_pulsewidth = max(self.ESC_MIN_VAL, min(self.ESC_MAX_VAL, leftVal))
+        self.rightESC_pulsewidth = max(self.ESC_MIN_VAL, min(self.ESC_MAX_VAL, rightVal))
         
     def timer_callback(self):
         # Set GPIO PWM values
@@ -79,6 +74,7 @@ class ThrusterControl(Node):
 
 
 def main(args=None):
+
     rclpy.init(args=args)
     thruster_control = ThrusterControl()
     executor = MultiThreadedExecutor()
