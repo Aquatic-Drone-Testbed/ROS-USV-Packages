@@ -30,18 +30,29 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
+
 def generate_launch_description():
     ld = LaunchDescription()
     config = os.path.join(
         get_package_share_directory('bno055'),
         'config',
-        'bno055_params.yaml'
-        )
-        
-    node=Node(
-        package = 'bno055',
-        executable = 'bno055',
-        parameters = [config]
+        'bno055_params_i2c.yaml'
     )
-    ld.add_action(node)
+    
+    bno055_node = Node(
+        package='bno055',
+        executable='bno055',
+        parameters=[config]
+    )
+
+    # Adjust parameters as necessary to correctly position the imu_link relative to the base_link
+    static_tf_pub_imu = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='imu_link_to_base_link',
+        arguments=["0", "0", "0", "0", "0", "0", "imu_link", "base_link"]
+    )
+    
+    ld.add_action(bno055_node)
+    ld.add_action(static_tf_pub_imu)
     return ld

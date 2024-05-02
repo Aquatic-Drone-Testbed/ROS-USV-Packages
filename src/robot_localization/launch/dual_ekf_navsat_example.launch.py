@@ -48,11 +48,11 @@ def generate_launch_description():
             output='screen',
             parameters=[os.path.join(get_package_share_directory("robot_localization"), 'params', 'ekf_imu_gps.yaml')],
             remappings=[
-                ('imu', 'imu/data'),                       # IMU data topic
-                ('gps/fix', 'gps/fix'),                   # GPS fix data topic
-                ('gps/filtered', 'gps/filtered'),         # Filtered GPS output topic
-                ('odometry/gps', 'odometry/gps'),         # GPS odometry output
-                ('odometry/filtered', 'odometry/global')  # EKF global position output
+                ('/bno055/imu', '/imu/data'),                       # IMU data topic
+                ('/gps/fix', '/gps_data'),                   # GPS fix data topic
+                ('/gps/filtered', '/filtered_gps'),         # Filtered GPS output topic
+                ('/odometry/gps', '/gps/odom'),         # GPS odometry output
+                ('/odometry/filtered', '/global_odometry')  # EKF global position output
             ]
         )
     ])
