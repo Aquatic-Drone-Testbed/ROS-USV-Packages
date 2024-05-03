@@ -46,4 +46,10 @@ def generate_launch_description():
             arguments=['0', '0', '0', '0', '0', '0', '1', 'bno055', 'base_link'],
             output='screen'
         ),
+        launch_ros.actions.Node(
+            package='gps_driver',
+            executable='gps_node',
+            name='gps_driver',
+            output='screen'
+        ),
 ])
