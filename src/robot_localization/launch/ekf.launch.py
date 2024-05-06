@@ -15,13 +15,13 @@ def generate_launch_description():
             output='screen',
             parameters=[config_ekf],
         ),
-        launch_ros.actions.Node(
-            package='robot_localization',
-            executable='navsat_transform_node',
-            name='navsat_transform_node',
-            output='screen',
-            parameters=[config_navsat],
-        ),
+        # launch_ros.actions.Node(
+        #     package='robot_localization',
+        #     executable='navsat_transform_node',
+        #     name='navsat_transform_node',
+        #     output='screen',
+        #     parameters=[config_navsat],
+        # ),
         launch_ros.actions.Node(
             package='tf2_ros',
             executable='static_transform_publisher',

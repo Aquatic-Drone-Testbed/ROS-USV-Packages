@@ -26,7 +26,7 @@ def generate_launch_description():
             executable='ekf_node',
             name='ekf_filter_node_odom',
             output='screen',
-            parameters=[os.path.join(get_package_share_directory("robot_localization"), 'params', 'ekf_imu_gps.yaml')],
+            parameters=[os.path.join(get_package_share_directory("robot_localization"), 'params', 'dual_ekf_navsat_example.yaml')],
             remappings=[('odometry/filtered', 'odometry/local')]
         ),
         
@@ -36,7 +36,7 @@ def generate_launch_description():
             executable='ekf_node',
             name='ekf_filter_node_map',
             output='screen',
-            parameters=[os.path.join(get_package_share_directory("robot_localization"), 'params', 'ekf_imu_gps.yaml')],
+            parameters=[os.path.join(get_package_share_directory("robot_localization"), 'params', 'dual_ekf_navsat_example.yaml')],
             remappings=[('odometry/filtered', 'odometry/global')]
         ),
         
@@ -46,7 +46,7 @@ def generate_launch_description():
             executable='navsat_transform_node',
             name='navsat_transform',
             output='screen',
-            parameters=[os.path.join(get_package_share_directory("robot_localization"), 'params', 'ekf_imu_gps.yaml')],
+            parameters=[os.path.join(get_package_share_directory("robot_localization"), 'params', 'dual_ekf_navsat_example.yaml')],
             remappings=[
                 ('/bno055/imu', '/imu/data'),                       # IMU data topic
                 ('/gps/fix', '/gps_data'),                   # GPS fix data topic

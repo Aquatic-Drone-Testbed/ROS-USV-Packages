@@ -3,7 +3,7 @@
 ekf_filter_node_odom:
   ros__parameters:
     frequency: 30.0
-    sensor_timeout: 0.1
+    sensor_timeout: 1.0
     two_d_mode: false
     transform_time_offset: 0.0
     transform_timeout: 0.0
@@ -15,17 +15,17 @@ ekf_filter_node_odom:
     base_link_frame: base_link
     world_frame: odom
 
-    odom0: odometry/wheel
-    odom0_config: [false, false, false,
-                  false, false, false,
-                  true,  true,  true,
-                  false, false, true,
-                  false, false, false]
-    odom0_queue_size: 10
-    odom0_differential: false
-    odom0_relative: false
+    # odom0: odometry/wheel
+    # odom0_config: [false, false, false,
+    #               false, false, false,
+    #               true,  true,  true,
+    #               false, false, true,
+    #               false, false, false]
+    # odom0_queue_size: 10
+    # odom0_differential: false
+    # odom0_relative: false
 
-    imu0: imu/data
+    imu0: /imu/data
     imu0_config: [false, false, false,
                   true,  true,  false,
                   false, false, false,
@@ -57,17 +57,17 @@ ekf_filter_node_map:
     base_link_frame: base_link
     world_frame: map
 
-    odom0: odometry/wheel
-    odom0_config: [false, false, false,
-                  false, false, false,
-                  true,  true,  true,
-                  false, false, true,
-                  false, false, false]
-    odom0_queue_size: 10
-    odom0_differential: false
-    odom0_relative: false
+    # odom0: odometry/wheel
+    # odom0_config: [false, false, false,
+    #               false, false, false,
+    #               true,  true,  true,
+    #               false, false, true,
+    #               false, false, false]
+    # odom0_queue_size: 10
+    # odom0_differential: false
+    # odom0_relative: false
 
-    odom1: odometry/gps
+    odom1: /gps_data
     odom1_config: [true,  true,  false,
                   false, false, false,
                   false, false, false,
@@ -77,7 +77,7 @@ ekf_filter_node_map:
     odom1_differential: false
     odom1_relative: false
 
-    imu0: imu/data
+    imu0: /imu/data
     imu0_config: [false, false, false,
                   true,  true,  false,
                   false, false, false,

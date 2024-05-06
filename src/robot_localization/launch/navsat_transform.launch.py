@@ -30,5 +30,10 @@ def generate_launch_description():
             name='navsat_transform_node',
             output='screen',
             parameters=[os.path.join(get_package_share_directory("robot_localization"), 'params', 'navsat_transform.yaml')],
+            remappings=[
+                ('/imu', '/bno055/imu'),             # Remap from /imu to /bno055/imu
+                # ('/gps/fix', '/gps/fix'),            # No need to remap if already correct
+                # ('/odometry/gps', '/odometry/gps')   # No need to remap if already correct
+            ]
            ),
 ])

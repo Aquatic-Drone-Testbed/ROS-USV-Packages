@@ -1,5 +1,8 @@
 navsat_transform_node:
     ros__parameters:
+
+        debug: false
+        
 # Frequency of the main run loop
         frequency: 30.0
 
