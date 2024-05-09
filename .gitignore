@@ -3,6 +3,9 @@ build/
 install/
 log/
 
+# robot_localization debug file
+src/robot_localization/debug.txt
+
 # VScode config
 .vscode/*
 !.vscode/settings.json

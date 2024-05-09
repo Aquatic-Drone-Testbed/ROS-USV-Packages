@@ -33,6 +33,7 @@
     "runArgs": [
         "--net=host",
         "--privileged",
+        "--device=/dev/i2c-1:/dev/i2c-1",
         "-e", "DISPLAY=${env:DISPLAY}"
     ],
     // "containerEnv": {
