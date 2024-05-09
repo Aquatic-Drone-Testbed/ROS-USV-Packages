@@ -5,22 +5,25 @@ import socket
 import threading
 
 class UDPReceiver(Node):
+    UDP_TIMEOUT = 5
+    
     def __init__(self):
         super().__init__('udp_receiver_node')
         # Declare and obtain the UDP port as a parameter
         self.declare_parameter('port', 9000)  # Default port is 9000
         self.declare_parameter('host', "127.0.0.1")  # Default ip addr is local host
         
-        port = self.get_parameter('port').get_parameter_value().integer_value
-        host = self.get_parameter('host').get_parameter_value().string_value
-
-        #TODO for other publishers
-        self.thruster_controller_publisher = self.create_publisher(String, "thruster_control", 10)
-        
-        self.host = host
-        self.port = port
+        self.port = self.get_parameter('port').get_parameter_value().integer_value
+        self.host = self.get_parameter('host').get_parameter_value().string_value
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.host, self.port))
+        self.socket.settimeout(10)
+        
+        ready = select.select([self.mysocket], [], [], UDPReceiver.UDP_TIMEOUT)
+
+        # [TODO] for other publishers
+        self.thruster_controller_publisher = self.create_publisher(String, "thruster_control", 10)
+        
         self.thread = threading.Thread(target=self.listen, daemon=True)
         self.running = False
 
