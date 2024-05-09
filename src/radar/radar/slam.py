@@ -17,7 +17,6 @@ class Slam(Node):
     def __init__(self):
         super().__init__('slam')
         self.image_publisher_ = self.create_publisher(Image, 'radar_image', 10)
-        self.publisher_ = self.create_publisher(String, 'radar_control', 10)
         self.subscription = self.create_subscription(
             Spoke,
             'topic_radar_spoke',
@@ -34,6 +33,18 @@ class Slam(Node):
 
         self.radar_spokes[spoke.azimuth, :len(spoke.data)] = spoke.data
         self.spokes_received += 1
+
+
+    def run(self):
+        self.get_logger().info(f'Start SLAM')
+        
+        try:
+            while True:
+                radar_data = self.get_radar_data()
+                # radar_data = slam_node.get_random_radar_data()
+                self.generate_map(r=radar_data, k=None, p=None, K=None, area_threshold=50, gamma=None)
+        except KeyboardInterrupt:
+            self.get_logger().info(f'Stop SLAM')
 
 
     def get_random_radar_data(self):
@@ -55,18 +66,9 @@ class Slam(Node):
         self.radar_spokes = np.zeros((MAX_SPOKE_COUNT, MAX_SPOKE_LENGTH), np.uint8)
         self.spokes_received = 0
         
-        # turn on radar
-        msg = String()
-        msg.data = 'start_scan'
-        self.publisher_.publish(msg)
-        
         # block until 250 spokes fill buffer
         while self.spokes_received < MAX_SPOKE_COUNT:
             rclpy.spin_once(self)
-        
-        # turn off radar
-        msg.data = 'stop_scan'
-        self.publisher_.publish(msg)
         
         radar_data = np.copy(self.radar_spokes/MAX_INTENSITY * 255).astype(np.uint8)
         
@@ -82,30 +84,7 @@ class Slam(Node):
     def generate_map(self, r, k, p, K, area_threshold, gamma):
         """Coastline Extraction and Parameterization algorithm from
         https://ieeexplore.ieee.org/document/8600301
-
-        Args:
-            r (_type_): raw radar data
-            k (_type_): spline curve degree
-            p (_type_): knot spacing
-            K (_type_): coordinate transformation matrix
-            area_threshold (_type_): minimum polygon area threshold
-            gamma (_type_): angular resolution to discretize the polar coordinate 
-        """
-        # I = self.generate_radar_image(r, K)
-        I = cv2.imread('/home/ws/test.png', cv2.IMREAD_GRAYSCALE)
-        I = cv2.resize(I, None, fx=0.5, fy=0.5)
-        D = self.detect_contour(self.filter_image(I,binary_threshold=128))
-        P = self.extract_coastline(D, area_threshold=10, angular_resolution=None, K=None)
         
-        final = cv2.cvtColor(I,cv2.COLOR_GRAY2RGB)
-        print(final.shape)
-        print(P.shape)
-        # cv2.imshow('final', final); cv2.waitKey(0)
-        
-        self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(P, encoding="passthrough"))
-        self.get_logger().info(f'Published coastline image')
-
-
         # psuedocode
         # P={P1,…,Pn} , F⟵∅
 
@@ -124,6 +103,29 @@ class Slam(Node):
         # end for
         
         ############## end of pseudocode ##############
+
+        Args:
+            r (_type_): raw radar data
+            k (_type_): spline curve degree
+            p (_type_): knot spacing
+            K (_type_): coordinate transformation matrix
+            area_threshold (_type_): minimum polygon area threshold
+            gamma (_type_): angular resolution to discretize the polar coordinate 
+        """
+        I = self.generate_radar_image(r, K)
+        # I = cv2.imread('/home/ws/test.png', cv2.IMREAD_GRAYSCALE)
+        # I = cv2.resize(I, None, fx=0.5, fy=0.5)
+        D = self.detect_contour(self.filter_image(I,binary_threshold=128))
+        P = self.extract_coastline(D, area_threshold=10, angular_resolution=None, K=None)
+        
+        final = cv2.cvtColor(I,cv2.COLOR_GRAY2RGB)
+        print(final.shape)
+        print(P.shape)
+        # cv2.imshow('final', final); cv2.waitKey(0)
+        
+        # self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(I, encoding="passthrough"))
+        self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(P, encoding="passthrough"))
+        self.get_logger().info(f'Published coastline image')
 
 
     def generate_radar_image(self, radar_data, K):
@@ -224,9 +226,7 @@ def main():
     rclpy.init()
 
     slam_node = Slam()
-    # radar_data = slam_node.get_radar_data()
-    radar_data = slam_node.get_random_radar_data()
-    slam_node.generate_map(r=radar_data, k=None, p=None, K=None, area_threshold=50, gamma=None)
+    slam_node.run()
     slam_node.destroy_node()
     rclpy.shutdown()
 
