@@ -6,6 +6,7 @@ import threading
 
 class UDPReceiver(Node):
     UDP_TIMEOUT = 5
+    TIMEOUT_MSG = f"TIMEOUT:{UDP_TIMEOUT}"
     
     def __init__(self):
         super().__init__('udp_receiver_node')
@@ -17,9 +18,7 @@ class UDPReceiver(Node):
         self.host = self.get_parameter('host').get_parameter_value().string_value
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.host, self.port))
-        self.socket.settimeout(10)
-        
-        ready = select.select([self.mysocket], [], [], UDPReceiver.UDP_TIMEOUT)
+        self.socket.settimeout(UDPReceiver.UDP_TIMEOUT)
 
         # [TODO] for other publishers
         self.thruster_controller_publisher = self.create_publisher(String, "thruster_control", 10)
@@ -34,28 +33,34 @@ class UDPReceiver(Node):
 
     def listen(self):
         self.get_logger().info(f"UDP Receiver listening on {self.host}:{self.port}")
-        self.get_logger().info(f"UDP Receiver listening on {self.host}:{self.port}")
+        
         while self.running:
             try:
-                data, _ = self.socket.recvfrom(1024)  # Buffer size is 1024 bytes
+                data, address = self.socket.recvfrom(1024)  # Buffer size is 1024 bytes
                 message = data.decode()
-                self.publish_data(message)
+            except socket.timeout as e:
+                message = UDPReceiver.TIMEOUT_MSG
             except Exception as e:
                 self.get_logger().error(f"An error occurred while receiving data: {e}")
                 # may want to break the loop or take other actions
                 break  # or `continue` depending on your error handling strategy
+            
+            self.publish_data(message)
 
-    def publish_data(self, data):
-        # Assume data format "TYPE:ActualData"
-        data_type, _, actual_data = data.partition(':')
+    def publish_data(self, message):
+        # Assume data format "TYPE:data_value"
+        data_type, data_value = message.split(':')
         
         msg = String()
-        msg.data = actual_data
         #TODO add other keyboard or controller commands 
         match data_type:
-            case "CTRL":
+            case "TIMEOUT":
+                msg.data = "RADIO_TIMEOUT"
                 self.thruster_controller_publisher.publish(msg)
-                self.get_logger().info(f'Publishing to {"thruster_control"}: "{actual_data}"')
+            case "CTRL":
+                msg.data = data_value
+                self.thruster_controller_publisher.publish(msg)
+                self.get_logger().info(f'Publishing to {"thruster_control"}: "{data_value}"')
             case _:
                 self.get_logger().error(f"Unknown data type: {data_type}")
 

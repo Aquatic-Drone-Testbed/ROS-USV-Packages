@@ -43,13 +43,19 @@ class ThrusterControl(Node):
 
 
     def listener_callback(self, msg):
+        if msg.data == "RADIO_TIMEOUT":
+            self.base_thrust = 0
+            self.delta_thrust = 0
+            return
+        
         #Adjust thruster values
-        data_parts = msg.data.split(',')
-        if data_parts[0] == "ABS_Y":
-            self.base_thrust = round(int(data_parts[1]))/ThrusterControl.ESC_MAGNITUE # -1 to 1
-
-        if data_parts[0] == "ABS_X":
-            self.delta_thrust = round(int(data_parts[1]))/ThrusterControl.ESC_MAGNITUE # -1 to 1
+        direction, value_str = msg.data.split(',')
+        value = round(int(value_str))/ThrusterControl.ESC_MAGNITUE # -1 to 1
+        
+        if direction == "ABS_Y":
+            self.base_thrust = value
+        elif direction == "ABS_X":
+            self.delta_thrust = value
 
 
     def timer_callback(self):
