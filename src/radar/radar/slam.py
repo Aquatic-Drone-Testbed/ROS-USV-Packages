@@ -17,7 +17,6 @@ class Slam(Node):
     def __init__(self):
         super().__init__('slam')
         self.image_publisher_ = self.create_publisher(Image, 'radar_image', 10)
-        self.publisher_ = self.create_publisher(String, 'radar_control', 10)
         self.subscription = self.create_subscription(
             Spoke,
             'topic_radar_spoke',
@@ -39,11 +38,6 @@ class Slam(Node):
     def run(self):
         self.get_logger().info(f'Start SLAM')
         
-        # turn on radar
-        radar_control_msg = String()
-        radar_control_msg.data = 'start_scan'
-        self.publisher_.publish(radar_control_msg)
-        
         try:
             while True:
                 radar_data = self.get_radar_data()
@@ -51,10 +45,6 @@ class Slam(Node):
                 self.generate_map(r=radar_data, k=None, p=None, K=None, area_threshold=50, gamma=None)
         except KeyboardInterrupt:
             self.get_logger().info(f'Stop SLAM')
-        
-        # turn off radar
-        radar_control_msg.data = 'stop_scan'
-        self.publisher_.publish(radar_control_msg)
 
 
     def get_random_radar_data(self):
@@ -94,6 +84,25 @@ class Slam(Node):
     def generate_map(self, r, k, p, K, area_threshold, gamma):
         """Coastline Extraction and Parameterization algorithm from
         https://ieeexplore.ieee.org/document/8600301
+        
+        # psuedocode
+        # P={P1,…,Pn} , F⟵∅
+
+        # for i ← 1 to n do
+
+        # Pi={p0,…,pm}
+
+        # ł=∑j=1m∥pj−pj−1∥
+
+        # B⟵ CoxdeBoorRecursion(Pi,ρ,l, k)
+
+        # C⟵ SplineCurveFitting(Pi,B)
+
+        # F⟵F⋃C
+
+        # end for
+        
+        ############## end of pseudocode ##############
 
         Args:
             r (_type_): raw radar data
@@ -117,26 +126,6 @@ class Slam(Node):
         # self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(I, encoding="passthrough"))
         self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(P, encoding="passthrough"))
         self.get_logger().info(f'Published coastline image')
-
-
-        # psuedocode
-        # P={P1,…,Pn} , F⟵∅
-
-        # for i ← 1 to n do
-
-        # Pi={p0,…,pm}
-
-        # ł=∑j=1m∥pj−pj−1∥
-
-        # B⟵ CoxdeBoorRecursion(Pi,ρ,l, k)
-
-        # C⟵ SplineCurveFitting(Pi,B)
-
-        # F⟵F⋃C
-
-        # end for
-        
-        ############## end of pseudocode ##############
 
 
     def generate_radar_image(self, radar_data, K):
