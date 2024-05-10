@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
+from std_msgs.msg import String
 from cv_bridge import CvBridge
 import imageio.v3 as iio
 import numpy as np
@@ -26,13 +27,18 @@ class VideoPublisher(Node):
 
     def listener_callback(self, msg):
         # Toggle camera state
-        self.camera_on = not self.camera_on
-        state = 'on' if self.camera_on else 'off'
-        self.get_logger().info(f'Camera toggled {state}')
+        if(msg.data == "CAM TOGGLE"):
+            self.camera_on = not self.camera_on
+            state = 'on' if self.camera_on else 'off'
+            self.get_logger().info(f'Camera toggled {state}')
 
     def timer_callback(self):
         if not self.camera_on:
             self.get_logger().info('Camera is off, not sending frame')
+            return
+        # remove the following 3 lines when using a real camera
+        elif self.camera_on:
+            self.get_logger().info('Camera is on, sending frame')
             return
 
         try:

@@ -53,6 +53,9 @@ class UDPReceiver(Node):
         data_type, data_value = message.split(':')
         
         msg = String()
+        # self.get_logger().info(f'Received data: "{message}')
+        self.get_logger().info(f"Data type:-{data_type}-")
+        self.get_logger().info(f"Data Value:-{data_value}-")
         #TODO add other keyboard or controller commands 
         match data_type:
             case "TIMEOUT":
@@ -64,7 +67,7 @@ class UDPReceiver(Node):
                 self.get_logger().info(f'Publishing to {"thruster_control"}: "{data_value}"')
             case "TOGGLE":
                 msg.data = data_value
-                if(data_value == "CAM"):
+                if(data_value == "CAM TOGGLE"):
                     self.camera_control_publisher.publish(msg)
                     self.get_logger().info(f'Publishing to {"camera_control"}: "{data_value}"')
 
