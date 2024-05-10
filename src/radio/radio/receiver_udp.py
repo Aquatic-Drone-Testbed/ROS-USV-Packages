@@ -5,8 +5,8 @@ import socket
 import threading
 
 class UDPReceiver(Node):
-    UDP_TIMEOUT = 5
-    TIMEOUT_MSG = f"TIMEOUT:{UDP_TIMEOUT}"
+    RADIO_TIMEOUT_SECONDS = 5
+    TIMEOUT_MSG = f"TIMEOUT:{RADIO_TIMEOUT_SECONDS}"
     
     def __init__(self):
         super().__init__('udp_receiver_node')
@@ -18,7 +18,7 @@ class UDPReceiver(Node):
         self.host = self.get_parameter('host').get_parameter_value().string_value
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.host, self.port))
-        self.socket.settimeout(UDPReceiver.UDP_TIMEOUT)
+        self.socket.settimeout(UDPReceiver.RADIO_TIMEOUT_SECONDS)
 
         # [TODO] for other publishers
         self.thruster_controller_publisher = self.create_publisher(String, "thruster_control", 10)
@@ -39,6 +39,7 @@ class UDPReceiver(Node):
                 data, address = self.socket.recvfrom(1024)  # Buffer size is 1024 bytes
                 message = data.decode()
             except socket.timeout as e:
+                self.get_logger().warn(f"Socket timed out after {UDPReceiver.RADIO_TIMEOUT_SECONDS} seconds")
                 message = UDPReceiver.TIMEOUT_MSG
             except Exception as e:
                 self.get_logger().error(f"An error occurred while receiving data: {e}")
