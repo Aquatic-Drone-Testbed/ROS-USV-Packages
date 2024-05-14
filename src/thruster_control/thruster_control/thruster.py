@@ -9,10 +9,11 @@ import time
 class ThrusterControl(Node):
 
     #CONSTANTS FOR GPIO/ESC/THRUSTERS
-    ESC_START_UP_VAL = 1500
+    ESC_BASE_VAL = 1500
     ESC_MAX_VAL = 1850
     ESC_MIN_VAL = 1150
-    
+    ESC_MAGNITUE = ESC_MAX_VAL - ESC_BASE_VAL
+
     GPIO_ESC_PIN1 = 12
     GPIO_ESC_PIN2 = 13
 
@@ -43,34 +44,39 @@ class ThrusterControl(Node):
         self.timer = self.create_timer(0.01, self.timer_callback)  # Adjust PWM vaue at most every 0.1 seconds
         
         self.get_logger().info('Thruster control initialized.')
-        print(f"{'Timestamp':<20} | {'Left ESC Pulsewidth':<17} | {'Right ESC Pulsewidth'}")
-        print("-" * 60)  # Print a separator line
-
+        self.get_logger().info(f"{'Timestamp':<10} | {'Left ESC Pulsewidth':<17} | {'Right ESC Pulsewidth'}")
+        self.get_logger().info("-" * 60)  # Print a separator line
 
 
     def listener_callback(self, msg):
-        #Adjust thruster values
-        data_parts = msg.data.split(',')
-        if data_parts[0] == "ABS_Y":
-            self.base_thrust = -round(int(data_parts[1]))/350 # -1 to 1
-            
-        if data_parts[0] == "ABS_X":    
-            self.delta_thrust = -round(int(data_parts[1]))/350 # -1 to 1
-
-        leftVal = self.ESC_START_UP_VAL + 350 * (self.base_thrust + self.delta_thrust)
-        rightVal = self.ESC_START_UP_VAL + 350 * (self.base_thrust - self.delta_thrust)
+        if msg.data == "RADIO_TIMEOUT":
+            self.get_logger().warn('Radio timed out... Resetting thrusters to 0')
+            self.base_thrust = 0
+            self.delta_thrust = 0
+            return
         
-        self.leftESC_pulsewidth = max(self.ESC_MIN_VAL, min(self.ESC_MAX_VAL, leftVal))
-        self.rightESC_pulsewidth = max(self.ESC_MIN_VAL, min(self.ESC_MAX_VAL, rightVal))
+        #Adjust thruster values
+        direction, value_str = msg.data.split(',')
+        value = int(value_str)/ThrusterControl.ESC_MAGNITUE # normalize to [-1, 1]
         
     def timer_callback(self):
+        self.update_thrusters(self.base_thrust, self.delta_thrust)
+
+
+    def update_thrusters(self, base, delta):
+        left_val = ThrusterControl.ESC_BASE_VAL - ThrusterControl.ESC_MAGNITUE * (base + delta)
+        right_val = ThrusterControl.ESC_BASE_VAL - ThrusterControl.ESC_MAGNITUE * (base - delta)
+
+        # clamp between min and max value
+        left_val = np.clip(round(left_val), ThrusterControl.ESC_MIN_VAL, ThrusterControl.ESC_MAX_VAL)
+        right_val = np.clip(round(right_val), ThrusterControl.ESC_MIN_VAL, ThrusterControl.ESC_MAX_VAL)
+
         # Set GPIO PWM values
         self.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN1, self.leftESC_pulsewidth)
         self.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN2, self.rightESC_pulsewidth)
         
         timestamp = time.strftime("%H:%M:%S", time.localtime())
-        # Print ESC values in table format
-        print(f"{timestamp:<20} | Left ESC: {self.leftESC_pulsewidth:<17} | Right ESC: {self.rightESC_pulsewidth}")
+        self.get_logger().info(f"{timestamp:<10} | {f'Left ESC: {left_val}':<17} | Right ESC: {right_val}")
 
 
 def main(args=None):
@@ -79,8 +85,8 @@ def main(args=None):
     thruster_control = ThrusterControl()
     executor = MultiThreadedExecutor()
     rclpy.spin(thruster_control, executor=executor)
-    thruster_control.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN1, ThrusterControl.ESC_START_UP_VAL)  # Reset to neutral on shutdown
-    thruster_control.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN2, ThrusterControl.ESC_START_UP_VAL)  # Reset to neutral on shutdown
+    thruster_control.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN1, ThrusterControl.ESC_BASE_VAL)  # Reset to neutral on shutdown
+    thruster_control.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN2, ThrusterControl.ESC_BASE_VAL)  # Reset to neutral on shutdown
     thruster_control.destroy_node()
     rclpy.shutdown()
 
