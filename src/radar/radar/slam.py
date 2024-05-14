@@ -28,7 +28,7 @@ class Slam(Node):
 
 
     def radar_spoke_callback(self, spoke):
-        self.get_logger().debug(f'Received spoke {spoke.azimuth}')
+        self.get_logger().info(f'Received spoke {spoke.azimuth}')
         if self.radar_spokes is None: return
 
         self.radar_spokes[spoke.azimuth, :len(spoke.data)] = spoke.data
@@ -122,9 +122,12 @@ class Slam(Node):
         print(final.shape)
         print(P.shape)
         # cv2.imshow('final', final); cv2.waitKey(0)
+
+        _, binary_image = cv2.threshold(I, 0, 255, cv2.THRESH_BINARY)
         
-        # self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(I, encoding="passthrough"))
-        self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(P, encoding="passthrough"))
+        self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(I, encoding="passthrough"))
+        # self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(binary_image, encoding="passthrough"))
+        # self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(P, encoding="passthrough"))
         self.get_logger().info(f'Published coastline image')
 
 
