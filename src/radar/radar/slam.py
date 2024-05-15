@@ -28,11 +28,11 @@ class Slam(Node):
 
 
     def radar_spoke_callback(self, spoke):
-        self.get_logger().info(f'Received spoke {spoke.azimuth}')
         if self.radar_spokes is None: return
 
         self.radar_spokes[spoke.azimuth, :len(spoke.data)] = spoke.data
         self.spokes_received += 1
+        self.get_logger().info(f'Received spoke #{spoke.azimuth} ({self.spokes_received}/{MAX_SPOKE_COUNT})')
 
 
     def run(self):
@@ -74,7 +74,7 @@ class Slam(Node):
         
         # logging
         # self.get_logger().info(f'{self.radar_spokes=} {self.radar_spokes.shape}')
-        # cv2.imshow('polar image', radar_data); cv2.waitKey(0)
+        cv2.imshow('polar image', radar_data); cv2.waitKey(0)
         
         self.radar_spokes = None # clear buffer
         
@@ -117,11 +117,6 @@ class Slam(Node):
         # I = cv2.resize(I, None, fx=0.5, fy=0.5)
         D = self.detect_contour(self.filter_image(I,binary_threshold=128))
         P = self.extract_coastline(D, area_threshold=10, angular_resolution=None, K=None)
-        
-        final = cv2.cvtColor(I,cv2.COLOR_GRAY2RGB)
-        print(final.shape)
-        print(P.shape)
-        # cv2.imshow('final', final); cv2.waitKey(0)
 
         _, binary_image = cv2.threshold(I, 0, 255, cv2.THRESH_BINARY)
         
@@ -149,7 +144,7 @@ class Slam(Node):
         radar_image = cv2.rotate(radar_image, cv2.ROTATE_90_CLOCKWISE)
         
         # self.get_logger().info(f'{radar_image=} {radar_image.shape}')
-        # cv2.imshow('raw image', radar_image); cv2.waitKey(0)
+        cv2.imshow('raw image', radar_image); cv2.waitKey(0)
         
         return radar_image
 
@@ -220,7 +215,7 @@ class Slam(Node):
             center=(MAX_SPOKE_LENGTH, MAX_SPOKE_LENGTH), 
             maxRadius=MAX_SPOKE_LENGTH, flags=cv2.WARP_INVERSE_MAP)
         
-        # cv2.imshow('coastline', coastline); cv2.waitKey(0)
+        cv2.imshow('coastline', coastline); cv2.waitKey(0)
         
         return coastline
 
