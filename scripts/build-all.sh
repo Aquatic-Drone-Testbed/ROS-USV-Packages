@@ -7,3 +7,5 @@ chmod +x ./scripts/*
 ./scripts/build-thruster.sh
 ./scripts/build-radio.sh
 ./scripts/build-radar.sh
+./scripts/build-imu.sh
+./scripts/build-ekf.sh

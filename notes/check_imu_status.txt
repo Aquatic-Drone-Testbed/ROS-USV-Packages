@@ -1,0 +1,3 @@
+ros2 topic echo /diagnostics
+ros2 topic echo /gps/filtered
+ros2 topic echo /odometry/filtered 

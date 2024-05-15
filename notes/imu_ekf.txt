@@ -1,0 +1,7 @@
+1. ./scripts/build-imu.sh
+2. ./scripts/build-ekf.sh 
+3. ros2 topic echo /odometry/filtered
+optional:
+ros2 topic list
+ros2 topic echo /bno055/imu
+ros2 run tf2_tools view_frames
