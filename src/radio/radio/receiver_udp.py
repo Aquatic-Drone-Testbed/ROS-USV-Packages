@@ -72,12 +72,10 @@ class UDPReceiver(Node):
                     self.camera_control_publisher.publish(msg)
                     self.get_logger().info(f'Publishing to camera_control: "{data_value}"')
             case "RADAR TOGGLE":
-                if self.radar_on:
-                    msg.data = "stop_scan"
-                    self.radar_on = False
-                else:
-                    msg.data = "start_scan"
+                if msg.data = "start_scan":
                     self.radar_on = True
+                elif msg.data = "stop_scan":
+                    self.radar_on = False
                 self.radar_control_publisher.publish(msg)
                 self.get_logger().info(f'Publishing to radar_control: {msg.data}')
             case _:
