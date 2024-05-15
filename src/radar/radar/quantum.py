@@ -69,6 +69,11 @@ class Qauntum(Node):
             'radar_image', 
             10, 
             callback_group=reentrant_callback_group)
+        self.polar_image_publisher = self.create_publisher(
+            Image, 
+            '/Navtech/Polar', 
+            10, 
+            callback_group=reentrant_callback_group)
         
         # subscription
         self.radar_control_subscription = self.create_subscription(
@@ -136,7 +141,7 @@ class Qauntum(Node):
         self.transmit_command(control_message.STAY_ALIVE_1SEC)
         if (self.alive_counter%5 == 0):
             self.transmit_command(control_message.STAY_ALIVE_5SEC)
-        self.get_logger().debug(f'Sent stay alive command')
+        self.get_logger().info(f'Sent stay alive command')
 
 
     def transmit_command(self, command) -> None:
@@ -296,11 +301,11 @@ class Qauntum(Node):
 
     def imager_callback(self):
         polar_image = self.get_polar_image()
-        self.get_logger().info(f'Updated {self.spokes_updated} spokes in polar image of dimension {polar_image.shape=}')
+        self.polar_image_publisher.publish(self.bridge.cv2_to_imgmsg(polar_image, encoding="passthrough"))
+        self.get_logger().info(f'Published polar image of dimension {polar_image.shape} (updated {self.spokes_updated} spokes)')
         
         self.generate_map(r=polar_image, k=None, p=None, K=None, area_threshold=50, gamma=None)
         self.spokes_updated = 0
-        
 
 
     def get_polar_image(self):
