@@ -131,13 +131,16 @@ class Qauntum(Node):
         self.transmit_command(control_message.TX_OFF)
         self.get_logger().info(f'Sent tx off command')
 
-
+                   
+        
     def radar_control_callback(self, msg):
         match msg.data:
             case 'start_scan':
                 self.radar_tx_on()
             case 'stop_scan':
                 self.radar_tx_off()
+            case 'cycle_range':
+                self.radar_cycle_range()
             case _:
                 self.radar_tx_off()
 

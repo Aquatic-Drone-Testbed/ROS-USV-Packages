@@ -78,6 +78,10 @@ class UDPReceiver(Node):
                     self.radar_on = False
                 self.radar_control_publisher.publish(msg)
                 self.get_logger().info(f'Publishing to radar_control: {msg.data}')
+            case "RADAR RANGE":
+                msg.data = "cycle range"
+                self.radar_control_publisher.publish(msg)
+                self.get_logger().info(f'Publishing to radar_control: {msg.data}')
             case _:
                 self.get_logger().error(f"Unknown data type: {data_type}")
 
