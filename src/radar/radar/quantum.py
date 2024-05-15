@@ -84,7 +84,8 @@ class Qauntum(Node):
             callback_group=command_mutex_callback_group_)
         
         self.alive_counter = 0
-        self.spokes = np.random.uniform(low=0, high=MAX_INTENSITY, size=(250, MAX_SPOKE_LENGTH))
+        # self.spokes = np.random.uniform(low=0, high=MAX_INTENSITY, size=(250, MAX_SPOKE_LENGTH))
+        self.spokes = np.zeros((MAX_SPOKE_COUNT, MAX_SPOKE_LENGTH), np.uint8)
         self.spokes_updated = 0
         self.bridge = CvBridge()
 
@@ -281,7 +282,7 @@ class Qauntum(Node):
         self.spokes[qs.azimuth, :len(qs.data)] = qs.data
         self.spokes_updated += 1
         self.get_logger().debug(f'Received spoke #{qs.azimuth} ({self.spokes_updated}/{MAX_SPOKE_COUNT})')
-                
+        
         # msg = Spoke()
         # msg.azimuth = qs.azimuth
         # msg.data = qs.data
@@ -305,6 +306,8 @@ class Qauntum(Node):
         self.get_logger().info(f'Published polar image of dimension {polar_image.shape} (updated {self.spokes_updated} spokes)')
         
         self.generate_map(r=polar_image, k=None, p=None, K=None, area_threshold=50, gamma=None)
+        
+        self.spokes = np.zeros((MAX_SPOKE_COUNT, MAX_SPOKE_LENGTH), np.uint8)
         self.spokes_updated = 0
 
 
@@ -314,7 +317,8 @@ class Qauntum(Node):
         # polar_image = np.copy(self.spokes/MAX_INTENSITY * 255).astype(np.uint8)
         polar_image = np.copy(self.spokes/MAX_INTENSITY * 255).astype(np.uint8)
         
-        # cv2.imshow('polar image', spokes); cv2.waitKey(0)
+        # cv2.imshow('polar image', polar_image); cv2.waitKey(0)
+        cv2.imwrite('test/polar_image.jpg', polar_image)
         
         return polar_image
 
@@ -362,6 +366,7 @@ class Qauntum(Node):
         
         # self.get_logger().info(f'{radar_image=} {radar_image.shape}')
         # cv2.imshow('raw image', radar_image); cv2.waitKey(0)
+        cv2.imwrite('test/radar_image.jpg', radar_image)
         
         return radar_image
 
@@ -381,15 +386,19 @@ class Qauntum(Node):
         # [TODO]: apply morphological and bilateral filters
         erosion = cv2.erode(radar_image, np.ones((3, 3), np.uint8), iterations=1)
         # cv2.imshow('erosion', erosion); cv2.waitKey(0)
+        cv2.imwrite('test/erosion.jpg', erosion)
         dilation = cv2.dilate(erosion, np.ones((3, 3), np.uint8), iterations=1)
         # cv2.imshow('dilation', dilation); cv2.waitKey(0)
+        cv2.imwrite('test/dilation.jpg', dilation)
         
         bilateral = cv2.bilateralFilter(dilation, 9, 100, 100)
         # cv2.imshow('bilateral', bilateral); cv2.waitKey(0)
+        cv2.imwrite('test/bilateral.jpg', bilateral)
         
         # [TODO]: adjust threshold intensity value. range:[0,255]
         _, binary_image = cv2.threshold(bilateral, binary_threshold, 255, cv2.THRESH_BINARY)
         # cv2.imshow('threshold', binary_image); cv2.waitKey(0)
+        cv2.imwrite('test/binary_image.jpg', binary_image)
         
         return binary_image
 
@@ -412,12 +421,13 @@ class Qauntum(Node):
     def extract_coastline(self, contours, area_threshold, angular_resolution=None, K=None):
         landmasses = [cnt for cnt in contours if cv2.contourArea(cnt) > area_threshold]
         
-        img = np.zeros((2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH, 3), dtype=np.uint8)
-        cv2.drawContours(img, landmasses, -1, (255,255,255), -1)
-        # cv2.imshow('contour', img); cv2.waitKey(0)
+        contour = np.zeros((2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH, 3), dtype=np.uint8)
+        cv2.drawContours(contour, landmasses, -1, (255,255,255), -1)
+        # cv2.imshow('contour', contour); cv2.waitKey(0)
+        cv2.imwrite('test/contour.jpg', contour)
         
-        height, width = img.shape[:2]
-        polar = cv2.warpPolar(src=img, dsize=(MAX_SPOKE_LENGTH, 0), center=(width/2, height/2), maxRadius=width/2, flags=cv2.WARP_POLAR_LINEAR)
+        height, width = contour.shape[:2]
+        polar = cv2.warpPolar(src=contour, dsize=(MAX_SPOKE_LENGTH, 0), center=(width/2, height/2), maxRadius=width/2, flags=cv2.WARP_POLAR_LINEAR)
         polar = cv2.cvtColor(polar, cv2.COLOR_BGR2GRAY)
         # cv2.imshow('polar', polar); cv2.waitKey(0)
         
@@ -433,6 +443,7 @@ class Qauntum(Node):
             maxRadius=MAX_SPOKE_LENGTH, flags=cv2.WARP_INVERSE_MAP)
         
         # cv2.imshow('coastline', coastline); cv2.waitKey(0)
+        cv2.imwrite('test/coastline.jpg', coastline)
         
         return coastline
 
