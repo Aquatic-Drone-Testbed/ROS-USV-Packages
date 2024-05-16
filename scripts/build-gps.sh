@@ -1,5 +1,7 @@
 #!/bin/bash
 # Script for building and running the GPS driver for ROS2 in non-systemd environments
+# pip3 install gps
+sudo apt install -y gpsd gpsd-clients python3-gps
 
 # Start the gpsd daemon directly (adjust the device path as needed)
 sudo gpsd /dev/ttyACM0 -F /var/run/gpsd.sock
