@@ -22,7 +22,9 @@ class UDPReceiver(Node):
 
         # [TODO] for other publishers
         self.thruster_controller_publisher = self.create_publisher(String, "thruster_control", 10)
-        
+        self.camera_control_publisher = self.create_publisher(String, "camera_control", 10)
+        self.radar_control_publisher = self.create_publisher(String, "radar_control", 10)
+        self.radar_on = False
         self.thread = threading.Thread(target=self.listen, daemon=True)
         self.running = False
 
@@ -53,7 +55,10 @@ class UDPReceiver(Node):
         data_type, data_value = message.split(':')
         
         msg = String()
-        #TODO add other keyboard or controller commands 
+        # self.get_logger().info(f'Received data: "{message}')
+        self.get_logger().info(f"Data type:-{data_type}-")
+        self.get_logger().info(f"Data Value:-{data_value}-")
+
         match data_type:
             case "TIMEOUT":
                 msg.data = "RADIO_TIMEOUT"
@@ -62,6 +67,22 @@ class UDPReceiver(Node):
                 msg.data = data_value
                 self.thruster_controller_publisher.publish(msg)
                 self.get_logger().info(f'Publishing to {"thruster_control"}: "{data_value}"')
+            case "CAM TOGGLE":
+                msg.data = data_value
+                if(data_value == "CAM TOGGLE"):
+                    self.camera_control_publisher.publish(msg)
+                    self.get_logger().info(f'Publishing to camera_control: "{data_value}"')
+            case "RADAR TOGGLE":
+                if msg.data == "start_scan":
+                    self.radar_on = True
+                elif msg.data == "stop_scan":
+                    self.radar_on = False
+                self.radar_control_publisher.publish(msg)
+                self.get_logger().info(f'Publishing to radar_control: {msg.data}')
+            case "RADAR RANGE":
+                msg.data = "cycle range"
+                self.radar_control_publisher.publish(msg)
+                self.get_logger().info(f'Publishing to radar_control: {msg.data}')
             case _:
                 self.get_logger().error(f"Unknown data type: {data_type}")
 
