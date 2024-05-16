@@ -3,7 +3,7 @@
 
 ./scripts/rosdep.sh
 pip install cv_bridge
-colcon build --symlink-install --packages-select radar_interfaces radar
+colcon build --symlink-install --packages-select radar
 
 # Check if build is successful
 if [ $? -eq 0 ]; then
