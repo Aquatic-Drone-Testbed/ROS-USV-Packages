@@ -1,5 +1,7 @@
 #!/bin/bash
-#biulds and runs the IMU 
+#builds the IMU 
+sudo apt-get install -y python3-smbus 
+
 # Navigate to your ROS 2 workspace
 cd /home/ws
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 # Script for building thruster control package
+sudo pip3 install pigpio
+
 source install/setup.bash
 sudo apt install wget unzip -y
 wget https://github.com/joan2937/pigpio/archive/master.zip
@@ -13,7 +15,6 @@ sudo pigpiod
 cd ..
 rm master.zip
 sudo rm -rf pigpio-master
-sudo apt-get update && sudo apt-get upgrade -y
 
 
 # Build the thruster_control

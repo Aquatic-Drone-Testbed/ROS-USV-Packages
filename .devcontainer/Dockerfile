@@ -5,7 +5,7 @@ ARG USER_GID=$USER_UID
 
 # Create the user
 RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
     #
     # [Optional] Add sudo support. Omit if you don't need to install software after connecting.
     && apt-get update \
@@ -21,5 +21,9 @@ ENV SHELL /bin/bash
 # ********************************************************
 
 # [Optional] Set the default user. Omit if you want to keep the default as root.
+# For IMU
+RUN groupadd -f -r i2c
+RUN usermod -aG i2c,video $USERNAME
+
 USER $USERNAME
 CMD ["/bin/bash"]
