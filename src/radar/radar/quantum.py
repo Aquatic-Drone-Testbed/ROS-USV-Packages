@@ -20,8 +20,10 @@ from radar.packets.quantum_scan import QuantumScan
 from radar.packets.quantum_report import QuantumReport
 
 MAX_SPOKE_LENGTH = 256
+DEFAULT_NUM_SPOKES = 250
 MAX_INTENSITY = 128
-MAX_SPOKE_COUNT = 250
+MIN_RANGE_INDEX = 0
+MAX_RANGE_INDEX = 20
 class FrameId:
     RM_REPORT = 0x00010001
     QUANTUM_REPORT = 0x00280002
@@ -71,7 +73,7 @@ class Qauntum(Node):
             callback_group=reentrant_callback_group)
         self.polar_image_publisher = self.create_publisher(
             Image, 
-            '/Navtech/Polar', 
+            '/USV/Polar', 
             10, 
             callback_group=reentrant_callback_group)
         
@@ -84,9 +86,10 @@ class Qauntum(Node):
             callback_group=command_mutex_callback_group_)
         
         self.alive_counter = 0
-        # self.spokes = np.random.uniform(low=0, high=MAX_INTENSITY, size=(250, MAX_SPOKE_LENGTH))
-        self.spokes = np.zeros((MAX_SPOKE_COUNT, MAX_SPOKE_LENGTH), np.uint8)
+        self.num_spokes = DEFAULT_NUM_SPOKES
+        self.spokes = np.zeros((self.num_spokes, MAX_SPOKE_LENGTH), np.uint8)
         self.spokes_updated = 0
+        self.set_zoom(0)
         self.bridge = CvBridge()
 
 
@@ -158,6 +161,20 @@ class Qauntum(Node):
     def stop_scan(self) -> None:
         self.transmit_command(control_message.TX_OFF)
         self.get_logger().info(f'Sent tx off command')
+
+
+    def set_zoom(self, i) -> None:
+        self.range_index = i
+        self.transmit_command(control_message.get_range_command(i))
+        self.get_logger().info(f'Sent zoom level {i} command')
+
+
+    def zoom_in(self) -> None:
+        self.set_zoom(max(self.range_index - 1, MIN_RANGE_INDEX))
+
+
+    def zoom_out(self) -> None:
+        self.set_zoom(min(self.range_index + 1, MAX_RANGE_INDEX))
 
 
     def create_report_socket(self) -> socket:
@@ -279,9 +296,10 @@ class Qauntum(Node):
         
         if self.spokes is None: return
 
+        self.num_spokes = qs.num_spokes
         self.spokes[qs.azimuth, :len(qs.data)] = qs.data
         self.spokes_updated += 1
-        self.get_logger().debug(f'Received spoke #{qs.azimuth} ({self.spokes_updated}/{MAX_SPOKE_COUNT})')
+        self.get_logger().debug(f'Received spoke #{qs.azimuth} ({self.spokes_updated}/{self.num_spokes})')
         
         # msg = Spoke()
         # msg.azimuth = qs.azimuth
@@ -295,6 +313,7 @@ class Qauntum(Node):
         
         bl = QuantumReport.parse_report(data[:260])
         qr = QuantumReport(*bl)
+        self.range_index = qr.range_index
         self.get_logger().debug(f'{qr}')
         
         self.last_quantum_report = qr
@@ -303,11 +322,11 @@ class Qauntum(Node):
     def imager_callback(self):
         polar_image = self.get_polar_image()
         self.polar_image_publisher.publish(self.bridge.cv2_to_imgmsg(polar_image, encoding="passthrough"))
-        self.get_logger().info(f'Published polar image of dimension {polar_image.shape} (updated {self.spokes_updated} spokes)')
+        self.get_logger().info(f'Published polar image of dimension {polar_image.shape} (updated {self.spokes_updated} spokes at zoom level {self.range_index})')
         
         self.generate_map(r=polar_image, k=None, p=None, K=None, area_threshold=50, gamma=None)
         
-        self.spokes = np.zeros((MAX_SPOKE_COUNT, MAX_SPOKE_LENGTH), np.uint8)
+        self.spokes = np.zeros((self.num_spokes, MAX_SPOKE_LENGTH), np.uint8)
         self.spokes_updated = 0
 
 
@@ -351,7 +370,7 @@ class Qauntum(Node):
         """convert 2d polar image of radar data to 2d cartesian imagecv2.im
 
         Args:
-            spokes (_type_): 2D array of dimension (MAX_SPOKE_COUNT, MAX_SPOKE_LENGTH)
+            spokes (_type_): 2D array of dimension (self.num_spokes, MAX_SPOKE_LENGTH)
                                  with each row representing a single radar spoke
 
         Returns:
@@ -454,6 +473,10 @@ class Qauntum(Node):
                 self.start_scan()
             case 'stop_scan':
                 self.stop_scan()
+            case 'zoom_in':
+                self.zoom_in()
+            case 'zoom_out':
+                self.zoom_out()
             case _:
                 self.stop_scan()
 
