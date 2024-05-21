@@ -16,8 +16,8 @@ def generate_map(r, k, p, K, area_threshold, gamma):
     I = generate_radar_image(r, K)
     D = detect_contour(filter_image(I,binary_threshold=128))
     P = extract_coastline(D, area_threshold=10, angular_resolution=None, K=None)
-
-    _, binary_image = cv2.threshold(I, 0, 255, cv2.THRESH_BINARY)
+    
+    return I, D, P
 
 
 def generate_radar_image(spokes, K):
