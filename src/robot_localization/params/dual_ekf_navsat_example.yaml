@@ -1,5 +1,3 @@
-# For parameter descriptions, please refer to the template parameter files for each node.
-
 ekf_filter_node_odom:
   ros__parameters:
     frequency: 30.0
@@ -15,26 +13,28 @@ ekf_filter_node_odom:
     base_link_frame: base_link
     world_frame: odom
 
-    # odom0: odometry/wheel
-    # odom0_config: [false, false, false,
-    #               false, false, false,
-    #               true,  true,  true,
-    #               false, false, true,
-    #               false, false, false]
-    # odom0_queue_size: 10
-    # odom0_differential: false
-    # odom0_relative: false
-
     imu0: /imu/data
-    imu0_config: [false, false, false,
-                  true,  true,  false,
-                  false, false, false,
-                  true,  true,  true,
-                  true,  true,  true]
+    imu0_config: [false, false, false,  # Position: [x, y, z]
+                  false, false, false,  # Linear velocity: [x, y, z]
+                  true, true, true,     # Orientation: [roll, pitch, yaw]
+                  false, false, false,  # Angular velocity: [x, y, z]
+                  true, true, true,     # Orientation variance: [roll, pitch, yaw]
+                  false, false, false]  # Angular velocity variance: [x, y, z]
     imu0_differential: false
     imu0_relative: false
     imu0_queue_size: 10
     imu0_remove_gravitational_acceleration: true
+
+    odom1: /radar_odom
+    odom1_config: [true, true, false,   # Position: [x, y, z]
+                   false, false, false,  # Linear velocity: [x, y, z]
+                   true, true, true,     # Orientation: [roll, pitch, yaw]
+                   false, false, false,  # Angular velocity: [x, y, z]
+                   true, true, true,     # Orientation variance: [roll, pitch, yaw]
+                   false, false, false]  # Position variance: [x, y, z]
+    odom1_queue_size: 10
+    odom1_differential: false
+    odom1_relative: false
 
     use_control: false
 
@@ -57,16 +57,6 @@ ekf_filter_node_map:
     base_link_frame: base_link
     world_frame: map
 
-    # odom0: odometry/wheel
-    # odom0_config: [false, false, false,
-    #               false, false, false,
-    #               true,  true,  true,
-    #               false, false, true,
-    #               false, false, false]
-    # odom0_queue_size: 10
-    # odom0_differential: false
-    # odom0_relative: false
-
     odom1: /gps_data
     odom1_config: [true,  true,  false,
                   false, false, false,
@@ -77,12 +67,24 @@ ekf_filter_node_map:
     odom1_differential: false
     odom1_relative: false
 
+    odom2: /radar_odom
+    odom2_config: [true, true, false,   # Position: [x, y, z]
+                   false, false, false,  # Linear velocity: [x, y, z]
+                   true, true, true,     # Orientation: [roll, pitch, yaw]
+                   false, false, false,  # Angular velocity: [x, y, z]
+                   true, true, true,     # Orientation variance: [roll, pitch, yaw]
+                   false, false, false]  # Position variance: [x, y, z]
+    odom2_queue_size: 10
+    odom2_differential: false
+    odom2_relative: false
+
     imu0: /imu/data
-    imu0_config: [false, false, false,
-                  true,  true,  false,
-                  false, false, false,
-                  true,  true,  true,
-                  true,  true,  true]
+    imu0_config: [false, false, false,  # Position: [x, y, z]
+                  false, false, false,  # Linear velocity: [x, y, z]
+                  true, true, true,     # Orientation: [roll, pitch, yaw]
+                  false, false, false,  # Angular velocity: [x, y, z]
+                  true, true, true,     # Orientation variance: [roll, pitch, yaw]
+                  false, false, false]  # Angular velocity variance: [x, y, z]
     imu0_differential: false
     imu0_relative: false
     imu0_queue_size: 10
@@ -105,4 +107,3 @@ navsat_transform:
     publish_filtered_gps: true
     use_odometry_yaw: false
     wait_for_datum: false
-
