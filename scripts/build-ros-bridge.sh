@@ -4,8 +4,8 @@ colcon build --symlink-install --packages-select polar_to_ros1
 
 # check if build is successful
 if [ $? -eq 0 ]; then
-    echo "Radio build success..."
+    echo "ROS bridge build success..."
 else
-    echo "Radio build failed..."
+    echo "ROS bridge build failed..."
     exit 1
 fi
