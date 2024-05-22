@@ -38,7 +38,7 @@ class UDPSender(Node):
         )
      
         self.create_subscription(Image, 'video_stream', self.video_stream_callback, video_stream_qos)
-        self.create_subscription(Image, '/Navtech/Polar', self.radar_stream_callback, video_stream_qos)
+        self.create_subscription(Image, 'radar_image', self.radar_stream_callback, video_stream_qos)
         self.create_subscription(NavSatFix, 'gps_data', self.gps_data_callback, gps_data_qos)
         
         # UDP target IP and port
@@ -73,7 +73,7 @@ class UDPSender(Node):
         buffer = io.BytesIO()
         pil_image.save(buffer, format='JPEG', quality=10)
         compressed_img = buffer.getvalue()
-        self.send_udp_data(compressed_img, self.ros1_ip, self.radar_stream_port)
+        self.send_udp_data(compressed_img, self.control_station_ip, self.radar_stream_port)
         
     def gps_data_callback(self, msg):
         gps_data_str = f"Latitude: {msg.latitude}, Longitude: {msg.longitude}, Altitude: {msg.altitude}"

@@ -1,8 +1,9 @@
 # order to run the scripts
 1. radio-sender | radio-receiver
-2. imu          | gps              | quantum | video | thruster
-3. efk          | radar-on         | ros1&ros2-bridge server
-4. run-navsat_transform_node  | run-dual-ekf-navsat | ros-bridge   | 
+2. imu          | gps              | ekf |
+3. video        | thruster
+4. quantum      | radar-on         | ros1&ros2-bridge server
+5. navsat_transform_node  | dual-ekf-navsat | ros-bridge   | 
 
 # cmd to check the efk data:
 ros2 topic echo /diagnostics

@@ -6,4 +6,6 @@ source install/setup.bash
 # using default localhost
 # ros2 run polar_to_ros1 polar_to_ros1_node
 # using other ip
-ros2 run polar_to_ros1 polar_to_ros1_node --ros-args -p host:="192.168.1.108"
+# ros2 run polar_to_ros1 polar_to_ros1_node --ros-args -p host:="192.168.1.108"
+# using control station IP
+ros2 run polar_to_ros1 polar_to_ros1_node --ros-args -p host:="10.223.0.4" --log-level warn
