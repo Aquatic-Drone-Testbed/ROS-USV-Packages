@@ -40,7 +40,7 @@ class UDPSender(Node):
         self.create_subscription(Image, 'video_stream', self.video_stream_callback, video_stream_qos)
         self.create_subscription(Image, '/Navtech/Polar', self.radar_stream_callback, video_stream_qos)
         self.create_subscription(NavSatFix, 'gps_data', self.gps_data_callback, gps_data_qos)
-        self.create_subscription(String, 'diagnostics', self.diagnostics_callback, gps_data_qos)
+        self.create_subscription(String, 'diagnostic_status', self.diagnostics_callback, gps_data_qos)
         
         # UDP target IP and port
         self.gps_data_port = 9001

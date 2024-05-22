@@ -10,7 +10,7 @@ class GPSDriverNode(Node):
         self.publisher_ = self.create_publisher(NavSatFix, 'gps/fix', 10)
         self.timer = self.create_timer(1.0, self.publish_gps_data)
 
-        self.diagnostic_pub = self.create_publisher(String, 'diagnostics', 10)
+        self.diagnostic_pub = self.create_publisher(String, 'diagnostic_status', 10)
         self.diagnostic_timer = self.create_timer(3.0, self.publish_gps_heartbeat)
         self.has_signal = False
         #gps daemon running on local host with port 2947

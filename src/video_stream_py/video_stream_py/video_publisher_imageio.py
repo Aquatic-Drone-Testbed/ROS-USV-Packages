@@ -18,7 +18,7 @@ class VideoPublisher(Node):
         # fps = self.video_capture.get(cv2.CAP_PROP_FPS) or 30 # Default to 30 FPS if not available
         self.get_logger().info(f'Input Video: {fps}FPS')
 
-        self.diagnostic_pub = self.create_publisher(String, 'diagnostics', 10)
+        self.diagnostic_pub = self.create_publisher(String, 'diagnostic_status', 10)
         self.diagnostic_timer = self.create_timer(3.0, self.publish_video_heartbeat)
         self.camera_on = True # Camera is off by default
 

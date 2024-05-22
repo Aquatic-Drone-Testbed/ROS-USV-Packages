@@ -84,7 +84,7 @@ class Qauntum(Node):
         
         self.diagnostic_pub = self.create_publisher(
             String, 
-            'diagnostics', 
+            'diagnostic_status', 
             10)
         
         # subscription
