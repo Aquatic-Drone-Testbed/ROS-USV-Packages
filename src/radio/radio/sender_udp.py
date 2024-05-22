@@ -62,8 +62,9 @@ class UDPSender(Node):
         pil_image = PilImage.fromarray(cv_image) # Convert to Pillow image (allows us to avoid using openCV)
         # Compress the image as JPEG
         buffer = io.BytesIO()
-        pil_image.save(buffer, format='JPEG', quality=10)  # Adjust the quality as needed
+        pil_image.save(buffer, format='JPEG', quality=50)  # Adjust the quality as needed
         compressed_img = buffer.getvalue()
+        self.send_udp_data("Camera On", self.control_station_ip, self.video_stream_port)
         self.send_udp_data(compressed_img, self.control_station_ip, self.video_stream_port)
 
     def radar_stream_callback(self, msg):
@@ -78,7 +79,7 @@ class UDPSender(Node):
         gps_data_str = f"Latitude: {msg.latitude}, Longitude: {msg.longitude}, Altitude: {msg.altitude}"
         self.get_logger().info(f"sending to control station: {gps_data_str}")
         self.send_udp_data(gps_data_str, self.control_station_ip, self.gps_data_port)
-
+    
 def main(args=None):
     rclpy.init(args=args)
     udp_sender_node = UDPSender()

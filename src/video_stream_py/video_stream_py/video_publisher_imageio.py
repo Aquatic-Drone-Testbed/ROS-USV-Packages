@@ -36,10 +36,9 @@ class VideoPublisher(Node):
         if not self.camera_on:
             self.get_logger().info('Camera is off, not sending frame')
             return
-        # remove the following 3 lines when using a real camera
+        # remove the following lines when using a real camera
         elif self.camera_on:
             self.get_logger().info('Camera is on, sending frame')
-            return
 
         try:
             # Read the next frame from the frame generator.
