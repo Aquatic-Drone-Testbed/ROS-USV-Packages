@@ -1,0 +1,58 @@
+  Panels:
+- Class: rviz/Displays
+  Name: Displays
+- Class: rviz/Time
+  Name: Time
+- Class: rviz/Views
+  Name: Views
+  Property Tree Widget:
+    Expanded:
+      - /Frames
+      - /Global Options
+    Splitter Ratio: 0.5
+- Class: rviz/ToolManager
+  Name: ToolManager
+  Tools:
+    - Class: rviz/MoveCamera
+      Name: Move Camera
+    - Class: rviz/Interact
+      Name: Interact
+    - Class: rviz/Select
+      Name: Select
+    - Class: rviz/Measure
+      Name: Measure
+    - Class: rviz/SetInitialPose
+      Name: 2D Pose Estimate
+    - Class: rviz/SetGoal
+      Name: 2D Nav Goal
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.5
+      Cell Size: 0.05
+      Class: rviz/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Name: Grid
+      Plane: XY
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - At: -1
+      Class: rviz/Map
+      Enabled: true
+      Name: Map
+      Topic: /map
+    - At: -1
+      Class: rviz/PointCloud2
+      Enabled: true
+      Name: PointCloud
+      Topic: /radar_registered
+    - At: -1
+      Class: rviz/Path
+      Enabled: true
+      Name: Path
+      Topic: /slam_toolbox/trajectory
+  Enabled: true
+  Fixed Frame: map
+  Name: root
+  Value: true

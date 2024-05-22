@@ -1,0 +1,138 @@
+amcl:
+  ros__parameters:
+    use_sim_time: False
+    alpha1: 0.2
+    alpha2: 0.2
+    alpha3: 0.2
+    alpha4: 0.2
+    alpha5: 0.2
+    base_frame_id: base_link
+    global_frame_id: map
+    laser_max_range: 12.0
+    laser_min_range: 0.0
+    max_beams: 60
+    min_particles: 500
+    max_particles: 2000
+    odom_frame_id: odom
+    pf_err: 0.05
+    pf_z: 0.99
+    recovery_alpha_fast: 0.0
+    recovery_alpha_slow: 0.0
+    resample_interval: 2
+    robot_model_type: differential
+    tf_broadcast: true
+    transform_tolerance: 1.0
+    update_min_a: 0.2
+    update_min_d: 0.25
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: False
+    bt_xml_filename: "navigate_w_replanning.xml"
+
+controller_server:
+  ros__parameters:
+    use_sim_time: False
+    controller_frequency: 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.1
+    goal_check_tolerance: 0.25
+    goal_distance_tolerance: 0.25
+    goal_heading_tolerance: 0.25
+    progress_checker_plugin: "progress_checker"
+    progress_checker_progress_threshold: 0.5
+    progress_checker_time_allowance: 10.0
+    progress_checker_min_x_velocity: 0.01
+    progress_checker_min_y_velocity: 0.01
+    progress_checker_min_theta_velocity: 0.01
+    controller_plugins: ["FollowPath"]
+
+dwb_controller:
+  ros__parameters:
+    min_vel_x: 0.0
+    min_vel_y: 0.0
+    max_vel_x: 0.26
+    max_vel_y: 0.0
+    max_vel_theta: 1.0
+    min_speed_xy: -0.01
+    max_speed_xy: 0.26
+    min_speed_theta: -1.0
+    max_speed_theta: 1.0
+    acc_lim_x: 2.5
+    acc_lim_y: 0.0
+    acc_lim_theta: 3.2
+    decel_lim_x: 2.5
+    decel_lim_y: 0.0
+    decel_lim_theta: 3.2
+    heading_scoring: false
+    heading_scoring_timestep: 0.8
+    xy_goal_tolerance: 0.25
+    trans_stopped_velocity: 0.25
+    rot_stopped_velocity: 0.25
+    robot_radius: 0.35
+    goal_radius: 0.25
+    inflation_radius: 0.55
+    global_frame: odom
+    robot_frame: base_link
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      global_frame: map
+      robot_base_frame: base_link
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      transform_tolerance: 0.5
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      static_layer:
+        map_subscribe_transient_local: True
+      obstacle_layer:
+        enabled: True
+        observation_sources: scan
+        scan:
+          data_type: LaserScan
+          topic: scan
+          marking: True
+          clearing: True
+      inflation_layer:
+        enabled: True
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      global_frame: odom
+      robot_base_frame: base_link
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      transform_tolerance: 0.5
+      rolling_window: true
+      width: 3.0
+      height: 3.0
+      resolution: 0.05
+      plugins: ["obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        enabled: True
+        observation_sources: scan
+        scan:
+          data_type: LaserScan
+          topic: scan
+          marking: True
+          clearing: True
+      inflation_layer:
+        enabled: True
+
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 1.0
+    use_sim_time: False
+    plugin_names: ["GridBased"]
+    plugin_types: ["nav2_navfn_planner/NavfnPlanner"]
+
+recovery_server:
+  ros__parameters:
+    use_sim_time: False
+    costmap_topic: local_costmap/costmap_raw
+    footprint_topic: local_costmap/published_footprint
+    recovery_plugins: ["spin", "backup", "wait"]
+    recovery_types: ["nav2_recoveries/Spin", "nav2_recoveries/BackUp", "nav2_recoveries/Wait"]
