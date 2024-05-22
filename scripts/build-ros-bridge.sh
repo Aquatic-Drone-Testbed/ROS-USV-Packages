@@ -1,4 +1,7 @@
 #!/bin/bash
+
+pip install roslibpy
+
 # Script for building ros bridge for ROS2
 colcon build --symlink-install --packages-select polar_to_ros1
 

@@ -38,7 +38,7 @@ class UDPSender(Node):
         )
      
         self.create_subscription(Image, 'video_stream', self.video_stream_callback, video_stream_qos)
-        self.create_subscription(Image, '/Navtech/Polar', self.radar_stream_callback, video_stream_qos)
+        self.create_subscription(Image, 'radar_image', self.radar_stream_callback, video_stream_qos)
         self.create_subscription(NavSatFix, 'gps_data', self.gps_data_callback, gps_data_qos)
         self.create_subscription(String, 'diagnostic_status', self.diagnostics_callback, gps_data_qos)
         
@@ -56,14 +56,14 @@ class UDPSender(Node):
         if isinstance(data, str):
             data = data.encode()
         self.udp_socket.sendto(data, (ip, port))
-        self.get_logger().info(f'Sent {len(data)} bytes to {ip}:{port}')
+        self.get_logger().debug(f'Sent {len(data)} bytes to {ip}:{port}')
 
     def video_stream_callback(self, msg):
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough') #Convert MSG to OpenCV/CV_Bridge image format
         pil_image = PilImage.fromarray(cv_image) # Convert to Pillow image (allows us to avoid using openCV)
         # Compress the image as JPEG
         buffer = io.BytesIO()
-        pil_image.save(buffer, format='JPEG', quality=50)  # Adjust the quality as needed
+        pil_image.save(buffer, format='JPEG', quality=75)  # Adjust the quality as needed
         compressed_img = buffer.getvalue()
         self.send_udp_data(compressed_img, self.control_station_ip, self.video_stream_port)
 
@@ -73,7 +73,7 @@ class UDPSender(Node):
         buffer = io.BytesIO()
         pil_image.save(buffer, format='JPEG', quality=25)
         compressed_img = buffer.getvalue()
-        self.send_udp_data(compressed_img, self.ros1_ip, self.radar_stream_port)
+        self.send_udp_data(compressed_img, self.control_station_ip, self.radar_stream_port)
         
     def gps_data_callback(self, msg):
         gps_data_str = f"Latitude: {msg.latitude}, Longitude: {msg.longitude}, Altitude: {msg.altitude}"

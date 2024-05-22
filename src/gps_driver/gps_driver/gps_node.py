@@ -33,7 +33,7 @@ class GPSDriverNode(Node):
                 self.get_logger().info(f"Published real GPS data:\n{gps_msg}")
                 self.has_signal = True
             else:
-                self.get_logger().info(f"no fix")
+                self.get_logger().warn(f"no fix")
                 self.has_signal = False
         except Exception as e:
             self.get_logger().error(f"An error occurred: {e}")
