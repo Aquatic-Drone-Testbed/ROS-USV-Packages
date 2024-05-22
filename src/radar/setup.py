@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'quantum = radar.quantum:main',
+            'slam = radar.slam:main',
         ],
     },
 )
