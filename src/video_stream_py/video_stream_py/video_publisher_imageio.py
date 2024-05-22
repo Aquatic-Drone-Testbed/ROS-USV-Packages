@@ -14,13 +14,14 @@ class VideoPublisher(Node):
         self.video_reader = iio.imiter(f"<video{video_path}>")
         self.frame_generator = iter(self.video_reader)
 
-        self.camera_on = True # Camera is off by default
-
         fps = 30
         # fps = self.video_capture.get(cv2.CAP_PROP_FPS) or 30 # Default to 30 FPS if not available
         self.get_logger().info(f'Input Video: {fps}FPS')
 
         self.diagnostic_pub = self.create_publisher(String, 'diagnostics', 10)
+        self.diagnostic_timer = self.create_timer(3.0, self.publish_video_heartbeat)
+        self.camera_on = True # Camera is off by default
+
         self.publisher_ = self.create_publisher(Image, 'video_stream', 10)
         self.subscription = self.create_subscription(String, 'camera_control', self.listener_callback, 10)
         self.bridge = CvBridge()
@@ -36,13 +37,11 @@ class VideoPublisher(Node):
     def timer_callback(self):
         if not self.camera_on:
             self.get_logger().info('Camera is off, not sending frame')
-            self.diagnostic_pub.publish(String(data="Camera: Off"))
             return
             
         # remove the following lines when using a real camera
         elif self.camera_on:
             self.get_logger().info('Camera is on, sending frame')
-            self.diagnostic_pub.publish(String(data="Camera: On"))
 
         try:
             # Read the next frame from the frame generator.
@@ -57,6 +56,12 @@ class VideoPublisher(Node):
         self.get_logger().info(f'Sending frame: Width = {frame.shape[1]}, Height = {frame.shape[0]}')
         image_message = self.bridge.cv2_to_imgmsg(np.asarray(frame), encoding='rgb8')
         self.publisher_.publish(image_message)
+
+    def publish_video_heartbeat(self):
+        if self.camera_on:
+            self.diagnostic_pub.publish(String(data="Camera: On"))
+        else:
+            self.diagnostic_pub.publish(String(data="Camera: Off"))
 
 def main(args=None):
     rclpy.init(args=args)

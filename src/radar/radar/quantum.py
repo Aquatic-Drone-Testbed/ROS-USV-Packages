@@ -65,6 +65,10 @@ class Qauntum(Node):
             0, 
             self.radar_data_callback, 
             receiver_mutex_callback_group)
+        # send radar heartbeat every 3 second
+        self.diagnostic_timer = self.create_timer(
+            3.0,
+            self.publish_radar_heartbeat)
         
         # publisher
         self.image_publisher_ = self.create_publisher(
@@ -78,6 +82,11 @@ class Qauntum(Node):
             10, 
             callback_group=reentrant_callback_group)
         
+        self.diagnostic_pub = self.create_publisher(
+            String, 
+            'diagnostics', 
+            10)
+        
         # subscription
         self.radar_control_subscription = self.create_subscription(
             String,
@@ -85,13 +94,14 @@ class Qauntum(Node):
             self.radar_control_callback,
             10,
             callback_group=command_mutex_callback_group_)
-        
+    
         self.alive_counter = 0
         self.num_spokes = DEFAULT_NUM_SPOKES
         self.spokes = np.zeros((self.num_spokes, MAX_SPOKE_LENGTH), np.uint8)
         self.spokes_updated = 0
         self.set_zoom(0)
         self.bridge = CvBridge()
+        self.scanning = False
 
 
     def locate_quantum(self, multicast_group='224.0.0.1', multicast_port=5800, quantum_model_id=40) -> LocationInfo:
@@ -157,11 +167,13 @@ class Qauntum(Node):
     def start_scan(self) -> None:
         self.transmit_command(control_message.TX_ON)
         self.get_logger().info(f'Sent tx on command')
+        self.scanning = True
 
 
     def stop_scan(self) -> None:
         self.transmit_command(control_message.TX_OFF)
         self.get_logger().info(f'Sent tx off command')
+        self.scanning = False
 
 
     def set_zoom(self, i) -> None:
@@ -350,6 +362,11 @@ class Qauntum(Node):
             case _:
                 self.stop_scan()
 
+    def publish_radar_heartbeat(self):
+        if self.scanning:
+            self.diagnostic_pub.publish(String(data="Radar: Scanning"))
+        else:
+            self.diagnostic_pub.publish(String(data="Radar: Standby"))
 
 def main(args=None):
     rclpy.init(args=args)
