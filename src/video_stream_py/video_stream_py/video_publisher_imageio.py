@@ -34,24 +34,24 @@ class VideoPublisher(Node):
 
     def timer_callback(self):
         if not self.camera_on:
-            self.get_logger().info('Camera is off, not sending frame')
+            self.get_logger().warn('Camera is off, not sending frame')
             return
             
         # remove the following lines when using a real camera
         elif self.camera_on:
-            self.get_logger().info('Camera is on, sending frame')
+            self.get_logger().debug('Camera is on, sending frame')
 
         try:
             # Read the next frame from the frame generator.
             frame = next(self.frame_generator)
         except StopIteration:
             # If there are no frames left, we assume the video is over.
-            self.get_logger().info('End of video stream')
+            self.get_logger().warn('End of video stream')
             self.destroy_node()
             rclpy.shutdown()
             return
 
-        self.get_logger().info(f'Sending frame: Width = {frame.shape[1]}, Height = {frame.shape[0]}')
+        self.get_logger().debug(f'Sending frame: Width = {frame.shape[1]}, Height = {frame.shape[0]}')
         image_message = self.bridge.cv2_to_imgmsg(np.asarray(frame), encoding='rgb8')
         self.publisher_.publish(image_message)
 

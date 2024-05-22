@@ -27,7 +27,7 @@ class GPSDriverNode(Node):
                 self.publisher_.publish(gps_msg)
                 self.get_logger().info(f"Published real GPS data:\n{gps_msg}")
             else:
-                self.get_logger().info(f"no fix")
+                self.get_logger().warn(f"no fix")
         except Exception as e:
             self.get_logger().error(f"An error occurred: {e}")
             self.get_logger().warn('GPSD has terminated')
