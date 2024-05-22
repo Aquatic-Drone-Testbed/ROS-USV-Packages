@@ -27,3 +27,5 @@ RUN usermod -aG i2c,video $USERNAME
 
 USER $USERNAME
 CMD ["/bin/bash"]
+
+RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> ~/.bashrc
