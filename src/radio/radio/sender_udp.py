@@ -62,7 +62,7 @@ class UDPSender(Node):
         pil_image = PilImage.fromarray(cv_image) # Convert to Pillow image (allows us to avoid using openCV)
         # Compress the image as JPEG
         buffer = io.BytesIO()
-        pil_image.save(buffer, format='JPEG', quality=50)  # Adjust the quality as needed
+        pil_image.save(buffer, format='JPEG', quality=75)  # Adjust the quality as needed
         compressed_img = buffer.getvalue()
         self.send_udp_data("Camera On", self.control_station_ip, self.video_stream_port)
         self.send_udp_data(compressed_img, self.control_station_ip, self.video_stream_port)
