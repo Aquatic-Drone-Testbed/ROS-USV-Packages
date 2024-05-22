@@ -14,7 +14,7 @@ class VideoPublisher(Node):
         self.video_reader = iio.imiter(f"<video{video_path}>")
         self.frame_generator = iter(self.video_reader)
 
-        self.camera_on = False # Camera is off by default
+        self.camera_on = True # Camera is off by default
 
         fps = 30
         # fps = self.video_capture.get(cv2.CAP_PROP_FPS) or 30 # Default to 30 FPS if not available
@@ -36,6 +36,7 @@ class VideoPublisher(Node):
         if not self.camera_on:
             self.get_logger().info('Camera is off, not sending frame')
             return
+            
         # remove the following lines when using a real camera
         elif self.camera_on:
             self.get_logger().info('Camera is on, sending frame')
