@@ -13,4 +13,4 @@ export RCUTILS_LOGGING_USE_STDOUT=1
 # ./scripts/run-radio-sender.sh &
 # ./scripts/run-video.sh &
 
-trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM
+trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
