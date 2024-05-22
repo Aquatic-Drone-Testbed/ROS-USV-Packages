@@ -20,6 +20,7 @@ class VideoPublisher(Node):
         # fps = self.video_capture.get(cv2.CAP_PROP_FPS) or 30 # Default to 30 FPS if not available
         self.get_logger().info(f'Input Video: {fps}FPS')
 
+        self.diagnostic_pub = self.create_publisher(String, 'diagnostics', 10)
         self.publisher_ = self.create_publisher(Image, 'video_stream', 10)
         self.subscription = self.create_subscription(String, 'camera_control', self.listener_callback, 10)
         self.bridge = CvBridge()
@@ -35,11 +36,13 @@ class VideoPublisher(Node):
     def timer_callback(self):
         if not self.camera_on:
             self.get_logger().info('Camera is off, not sending frame')
+            self.diagnostic_pub.publish(String(data="Camera: Off"))
             return
             
         # remove the following lines when using a real camera
         elif self.camera_on:
             self.get_logger().info('Camera is on, sending frame')
+            self.diagnostic_pub.publish(String(data="Camera: On"))
 
         try:
             # Read the next frame from the frame generator.
