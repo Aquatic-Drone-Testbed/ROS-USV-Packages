@@ -27,8 +27,10 @@ class Ros1ToRos2Bridge(Node):
         msg = Odometry()
         msg.header.stamp.sec = message['header']['stamp']['secs']
         msg.header.stamp.nanosec = message['header']['stamp']['nsecs']
-        msg.header.frame_id = message['header']['frame_id']
-        msg.child_frame_id = message['child_frame_id']
+        #msg.header.frame_id = message['header']['frame_id']
+        #msg.child_frame_id = message['child_frame_id']
+        msg.header.frame_id = 'odom'
+        msg.child_frame_id = 'base_link'
 
         msg.pose.pose.position.x = message['pose']['pose']['position']['x']
         msg.pose.pose.position.y = message['pose']['pose']['position']['y']
@@ -53,14 +55,27 @@ class Ros1ToRos2Bridge(Node):
         msg = PointCloud2()
         msg.header.stamp.sec = message['header']['stamp']['secs']
         msg.header.stamp.nanosec = message['header']['stamp']['nsecs']
-        msg.header.frame_id = message['header']['frame_id']
-
-        msg.height = message['height']
-        msg.width = message['width']
-        msg.fields = [PointField(name=field['name'], offset=field['offset'], datatype=field['datatype'], count=field['count']) for field in message['fields']]
+        #msg.header.frame_id = message['header']['frame_id']
+        msg.header.frame_id = 'base_link'
+        
+        #msg.height = message['height']
+        #msg.width = message['width']
+        msg.height = 1  # For 2D point clouds, height is typically 1
+        msg.width = message['width']  # Number of points in the cloud
+        msg.fields = [
+            PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
+            PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
+            PointField(name='intensity', offset=8, datatype=PointField.FLOAT32, count=1),  # If used
+        ]
+        # Ensure the total size sums up to 32 bytes
+        # If there are other fields, ensure their offsets and sizes are correctly set
+    
         msg.is_bigendian = message['is_bigendian']
         msg.point_step = message['point_step']
         msg.row_step = message['row_step']
+        
+        #print(msg.height, msg.width, msg.point_step)
+        
         
         data_bytes = message['data'].encode()
         msg.data = data_bytes
