@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Kill all background processes on exit
+trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+
+# Redirect all ROS logging output to STDOUT
 export RCUTILS_LOGGING_USE_STDOUT=1
 
 ./scripts/run-quantum.sh &
@@ -14,5 +18,5 @@ export RCUTILS_LOGGING_USE_STDOUT=1
 ./scripts/run-radio-sender.sh &
 ./scripts/run-video.sh &
 
-trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+# Keep this script alive forever
 sleep infinity
