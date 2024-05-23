@@ -8,7 +8,7 @@ import cv2
 
 class VideoPublisher(Node):
     def __init__(self):
-        super().__init__('video_publisher')
+        super().__init__('video_publisher_node')
         # video_path = os.path.join(get_package_share_directory('video_stream'), 'resource', 'testvideo.mp4') # Stock video input
         video_path = 0  # USB Camera Input
         self.video_capture = cv2.VideoCapture(video_path)

@@ -18,6 +18,7 @@ from radar.packets import control_message
 from radar.packets.rmr_report import RMReport
 from radar.packets.quantum_scan import QuantumScan
 from radar.packets.quantum_report import QuantumReport
+import radar.filter as RadarFilter
 
 MAX_SPOKE_LENGTH = 256
 DEFAULT_NUM_SPOKES = 250
@@ -32,7 +33,7 @@ class FrameId:
 class Qauntum(Node):
 
     def __init__(self):
-        super().__init__('quantum')
+        super().__init__('quantum_node')
         # uncomment below to simulate locator
         # data = b'\x00\x00\x00\x00\x92\x8b\x80\xcb(\x00\x00\x00\x03\x00d\x00\x06\x08\x10\x00\x01\xb3\x01\xe8\x0e\n\x11\x002\x00\xe0\n\x0f\n6\x00'
         # bl = LocationInfo.parse(data[:36])
@@ -64,6 +65,10 @@ class Qauntum(Node):
             0, 
             self.radar_data_callback, 
             receiver_mutex_callback_group)
+        # send radar heartbeat every 3 second
+        self.diagnostic_timer = self.create_timer(
+            3.0,
+            self.publish_radar_heartbeat)
         
         # publisher
         self.image_publisher_ = self.create_publisher(
@@ -77,6 +82,11 @@ class Qauntum(Node):
             10, 
             callback_group=reentrant_callback_group)
         
+        self.diagnostic_pub = self.create_publisher(
+            String, 
+            'diagnostic_status', 
+            10)
+        
         # subscription
         self.radar_control_subscription = self.create_subscription(
             String,
@@ -84,13 +94,14 @@ class Qauntum(Node):
             self.radar_control_callback,
             10,
             callback_group=command_mutex_callback_group_)
-        
+    
         self.alive_counter = 0
         self.num_spokes = DEFAULT_NUM_SPOKES
         self.spokes = np.zeros((self.num_spokes, MAX_SPOKE_LENGTH), np.uint8)
         self.spokes_updated = 0
         self.set_zoom(0)
         self.bridge = CvBridge()
+        self.scanning = False
 
 
     def locate_quantum(self, multicast_group='224.0.0.1', multicast_port=5800, quantum_model_id=40) -> LocationInfo:
@@ -156,11 +167,13 @@ class Qauntum(Node):
     def start_scan(self) -> None:
         self.transmit_command(control_message.TX_ON)
         self.get_logger().info(f'Sent tx on command')
+        self.scanning = True
 
 
     def stop_scan(self) -> None:
         self.transmit_command(control_message.TX_OFF)
         self.get_logger().info(f'Sent tx off command')
+        self.scanning = False
 
 
     def set_zoom(self, i) -> None:
@@ -320,151 +333,20 @@ class Qauntum(Node):
 
 
     def imager_callback(self):
-        polar_image = self.get_polar_image()
+        polar_image = np.copy(self.spokes/MAX_INTENSITY * 255).astype(np.uint8)
+        cv2.imwrite('test/polar_image.jpg', polar_image)
+        
         self.polar_image_publisher.publish(self.bridge.cv2_to_imgmsg(polar_image, encoding="passthrough"))
         self.get_logger().info(f'Published polar image of dimension {polar_image.shape} (updated {self.spokes_updated} spokes at zoom level {self.range_index})')
         
-        self.generate_map(r=polar_image, k=None, p=None, K=None, area_threshold=50, gamma=None)
+        I, D, P = RadarFilter.generate_map(r=polar_image, k=None, p=None, K=None, area_threshold=50, gamma=None)
+        
+        ctrl_station_img = I
+        self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(ctrl_station_img, encoding="passthrough"))
+        self.get_logger().info(f'Published image of dimension {ctrl_station_img.shape}')
         
         self.spokes = np.zeros((self.num_spokes, MAX_SPOKE_LENGTH), np.uint8)
         self.spokes_updated = 0
-
-
-    def get_polar_image(self):
-        # Uncomment below for testing
-        # self.spokes = np.random.uniform(low=0, high=MAX_INTENSITY, size=(250, MAX_SPOKE_LENGTH)) # random spokes
-        # polar_image = np.copy(self.spokes/MAX_INTENSITY * 255).astype(np.uint8)
-        polar_image = np.copy(self.spokes/MAX_INTENSITY * 255).astype(np.uint8)
-        
-        # cv2.imshow('polar image', polar_image); cv2.waitKey(0)
-        cv2.imwrite('test/polar_image.jpg', polar_image)
-        
-        return polar_image
-
-
-    def generate_map(self, r, k, p, K, area_threshold, gamma):
-        """
-        Args:
-            r (_type_): raw radar data
-            k (_type_): spline curve degree
-            p (_type_): knot spacing
-            K (_type_): coordinate transformation matrix
-            area_threshold (_type_): minimum polygon area threshold
-            gamma (_type_): angular resolution to discretize the polar coordinate 
-        """
-        I = self.generate_radar_image(r, K)
-        # I = cv2.imread('/home/ws/test.png', cv2.IMREAD_GRAYSCALE)
-        # I = cv2.resize(I, None, fx=0.5, fy=0.5)
-        D = self.detect_contour(self.filter_image(I,binary_threshold=128))
-        P = self.extract_coastline(D, area_threshold=10, angular_resolution=None, K=None)
-
-        _, binary_image = cv2.threshold(I, 0, 255, cv2.THRESH_BINARY)
-        
-        self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(I, encoding="passthrough"))
-        # self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(binary_image, encoding="passthrough"))
-        # self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(P, encoding="passthrough"))
-        self.get_logger().info(f'Published coastline image of dimension {P.shape}')
-
-
-    def generate_radar_image(self, spokes, K):
-        """convert 2d polar image of radar data to 2d cartesian imagecv2.im
-
-        Args:
-            spokes (_type_): 2D array of dimension (self.num_spokes, MAX_SPOKE_LENGTH)
-                                 with each row representing a single radar spoke
-
-        Returns:
-            radar_image (_type_): grayscale image of radar scan in cartesian coordinates
-        """
-        radar_image = cv2.warpPolar(
-            src=spokes, 
-            dsize=(2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH), 
-            center=(MAX_SPOKE_LENGTH, MAX_SPOKE_LENGTH), 
-            maxRadius=MAX_SPOKE_LENGTH, flags=cv2.WARP_INVERSE_MAP)
-        radar_image = cv2.rotate(radar_image, cv2.ROTATE_90_CLOCKWISE)
-        
-        # self.get_logger().info(f'{radar_image=} {radar_image.shape}')
-        # cv2.imshow('raw image', radar_image); cv2.waitKey(0)
-        cv2.imwrite('test/radar_image.jpg', radar_image)
-        
-        return radar_image
-
-
-    def filter_image(self, radar_image, binary_threshold):
-        """apply morphological and bilateral filters for denoising
-        and convert grayscale radar_image to binary image according to 
-        predetermined threshold intensity value
-        
-        Args:
-            radar_image (_type_): grayscale image of radar scan in cartesian coordinates
-
-        Returns:
-            _type_: _description_
-        """
-        
-        # [TODO]: apply morphological and bilateral filters
-        erosion = cv2.erode(radar_image, np.ones((3, 3), np.uint8), iterations=1)
-        # cv2.imshow('erosion', erosion); cv2.waitKey(0)
-        cv2.imwrite('test/erosion.jpg', erosion)
-        dilation = cv2.dilate(erosion, np.ones((3, 3), np.uint8), iterations=1)
-        # cv2.imshow('dilation', dilation); cv2.waitKey(0)
-        cv2.imwrite('test/dilation.jpg', dilation)
-        
-        bilateral = cv2.bilateralFilter(dilation, 9, 100, 100)
-        # cv2.imshow('bilateral', bilateral); cv2.waitKey(0)
-        cv2.imwrite('test/bilateral.jpg', bilateral)
-        
-        # [TODO]: adjust threshold intensity value. range:[0,255]
-        _, binary_image = cv2.threshold(bilateral, binary_threshold, 255, cv2.THRESH_BINARY)
-        # cv2.imshow('threshold', binary_image); cv2.waitKey(0)
-        cv2.imwrite('test/binary_image.jpg', binary_image)
-        
-        return binary_image
-
-
-    def detect_contour(self, binary_image):
-        """extract the contours from the binary image using polygon extraction
-
-        Args:
-            binary_image (_type_): _description_
-
-        Returns:
-            _type_: _description_
-        """
-        # [TODO]: extract the contours from the binary image using polygon extraction
-        
-        contours, hierarchy = cv2.findContours(binary_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        return contours
-
-
-    def extract_coastline(self, contours, area_threshold, angular_resolution=None, K=None):
-        landmasses = [cnt for cnt in contours if cv2.contourArea(cnt) > area_threshold]
-        
-        contour = np.zeros((2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH, 3), dtype=np.uint8)
-        cv2.drawContours(contour, landmasses, -1, (255,255,255), -1)
-        # cv2.imshow('contour', contour); cv2.waitKey(0)
-        cv2.imwrite('test/contour.jpg', contour)
-        
-        height, width = contour.shape[:2]
-        polar = cv2.warpPolar(src=contour, dsize=(MAX_SPOKE_LENGTH, 0), center=(width/2, height/2), maxRadius=width/2, flags=cv2.WARP_POLAR_LINEAR)
-        polar = cv2.cvtColor(polar, cv2.COLOR_BGR2GRAY)
-        # cv2.imshow('polar', polar); cv2.waitKey(0)
-        
-        for spoke in polar:
-            spoke[np.argmax(spoke > 0)+1:] = 0
-        
-        # cv2.imshow('coastline polar', polar); cv2.waitKey(0)
-        
-        coastline = cv2.warpPolar(
-            src=polar, 
-            dsize=(2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH), 
-            center=(MAX_SPOKE_LENGTH, MAX_SPOKE_LENGTH), 
-            maxRadius=MAX_SPOKE_LENGTH, flags=cv2.WARP_INVERSE_MAP)
-        
-        # cv2.imshow('coastline', coastline); cv2.waitKey(0)
-        cv2.imwrite('test/coastline.jpg', coastline)
-        
-        return coastline
 
 
     def radar_control_callback(self, msg):
@@ -480,6 +362,11 @@ class Qauntum(Node):
             case _:
                 self.stop_scan()
 
+    def publish_radar_heartbeat(self):
+        if self.scanning:
+            self.diagnostic_pub.publish(String(data="Radar: Scanning"))
+        else:
+            self.diagnostic_pub.publish(String(data="Radar: Standby"))
 
 def main(args=None):
     rclpy.init(args=args)
