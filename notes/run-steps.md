@@ -17,3 +17,12 @@ ros2 topic echo /odometry/filtered
 4. Run `cd /home/ws`
 5. Run `./scripts/run-all.sh`
 ~~(or run `nohup ./scripts/run-all.sh &` to run in background)~~
+
+# DISCLAIMER  
+If you disconnect from the terminal that ran `./scripts/run-all.sh`,
+the only way to kill the nodes is by killing the process manually.
+
+You can either a) kill the processes manually or b) restart the entire container
+
+1. Run `ps ax` in container shell and find the PID of `./scripts/run-all.sh`
+2. If PID is 1234, run `kill -- -1234`
