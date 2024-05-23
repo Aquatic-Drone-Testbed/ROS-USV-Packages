@@ -2,7 +2,10 @@
 build/
 install/
 log/
+
+# Custom ignore
 test/
+nohup.out
 
 # robot_localization debug file
 src/robot_localization/debug.txt

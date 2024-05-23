@@ -18,10 +18,15 @@ class UDPSender(Node):
         super().__init__('udp_sender_node')
         
         # Declare and get the target IP address as a parameter
-        self.declare_parameter('target_ip', '127.0.0.1')  # Default to localhost
-        target_ip_param = self.get_parameter('target_ip').get_parameter_value().string_value
-        self.target_ip = target_ip_param
-        self.get_logger().info(f"self.target_ip = {self.target_ip}") 
+        self.declare_parameter('control_station_ip', '127.0.0.1')  # Default is localhost, pass the IP of the control station as a parameter
+        self.declare_parameter('ros1_ip', '127.0.0.1') # Localhost for sending to ROS1
+        control_station_ip_param = self.get_parameter('control_station_ip').get_parameter_value().string_value
+        ros1_ip_param = self.get_parameter('ros1_ip').get_parameter_value().string_value
+        self.control_station_ip = control_station_ip_param
+        self.ros1_ip = ros1_ip_param
+        self.get_logger().info(f"self.control_station_ip = {self.control_station_ip}") 
+        self.get_logger().info(f"self.ros1_ip = {self.ros1_ip}") 
+        
         # Create a CvBridge object to convert between ROS Image messages and OpenCV images
         self.bridge = CvBridge()
                         # Adjust these topic names and types according to your actual topics and data types
@@ -35,22 +40,23 @@ class UDPSender(Node):
         self.create_subscription(Image, 'video_stream', self.video_stream_callback, video_stream_qos)
         self.create_subscription(Image, 'radar_image', self.radar_stream_callback, video_stream_qos)
         self.create_subscription(NavSatFix, 'gps_data', self.gps_data_callback, gps_data_qos)
+        self.create_subscription(String, 'diagnostic_status', self.diagnostics_callback, 10)
         
         # UDP target IP and port
-        #adjust ports as needed
         self.gps_data_port = 9001
         self.video_stream_port = 9002
         self.radar_stream_port = 9003
+        self.diagnostic_data_port = 20000
 
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     # Send data to the target IP and port
-    def send_udp_data(self, data, port):
+    def send_udp_data(self, data, ip, port):
         # If data is a string, encode it to bytes
         if isinstance(data, str):
             data = data.encode()
-        self.udp_socket.sendto(data, (self.target_ip, port))
-        self.get_logger().info(f'Sent {len(data)} bytes to {self.target_ip}:{port}')
+        self.udp_socket.sendto(data, (ip, port))
+        self.get_logger().debug(f'Sent {len(data)} bytes to {ip}:{port}')
 
     def video_stream_callback(self, msg):
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough') #Convert MSG to OpenCV/CV_Bridge image format
@@ -59,7 +65,7 @@ class UDPSender(Node):
         buffer = io.BytesIO()
         pil_image.save(buffer, format='JPEG', quality=10)  # Adjust the quality as needed
         compressed_img = buffer.getvalue()
-        self.send_udp_data(compressed_img, self.video_stream_port)
+        self.send_udp_data(compressed_img, self.control_station_ip, self.video_stream_port)
 
     def radar_stream_callback(self, msg):
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
@@ -67,12 +73,16 @@ class UDPSender(Node):
         buffer = io.BytesIO()
         pil_image.save(buffer, format='JPEG', quality=10)
         compressed_img = buffer.getvalue()
-        self.send_udp_data(compressed_img, self.radar_stream_port)
+        self.send_udp_data(compressed_img, self.control_station_ip, self.radar_stream_port)
         
     def gps_data_callback(self, msg):
         gps_data_str = f"Latitude: {msg.latitude}, Longitude: {msg.longitude}, Altitude: {msg.altitude}"
-        self.get_logger().info(f"sending to control station: {gps_data_str}")
-        self.send_udp_data(gps_data_str, self.gps_data_port)
+        self.get_logger().debug(f"sending to control station: {gps_data_str}")
+        self.send_udp_data(gps_data_str, self.control_station_ip, self.gps_data_port)
+    
+    def diagnostics_callback(self, msg):
+        self.get_logger().debug(f"Sending to control station: {msg}")
+        self.send_udp_data(msg.data, self.control_station_ip, self.diagnostic_data_port)
 
 def main(args=None):
     rclpy.init(args=args)

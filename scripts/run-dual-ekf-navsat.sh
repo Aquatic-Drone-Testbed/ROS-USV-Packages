@@ -1,7 +1,7 @@
 
 #!/bin/bash
 # To gain permission: chmod +x scripts/run-ekf.sh
-echo "Running EKF node..."
+echo "Running Dual EKF node..."
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 

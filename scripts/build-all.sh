@@ -8,4 +8,5 @@ chmod +x ./scripts/*
 ./scripts/build-radio.sh
 ./scripts/build-radar.sh
 ./scripts/build-imu.sh
+./scripts/build-ros-bridge.sh
 ./scripts/build-ekf.sh
