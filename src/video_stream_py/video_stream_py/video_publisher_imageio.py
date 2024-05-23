@@ -58,10 +58,13 @@ class VideoPublisher(Node):
         self.publisher_.publish(image_message)
 
     def publish_video_heartbeat(self):
+        msg = String()
         if self.camera_on:
-            self.diagnostic_pub.publish(String(data="Camera: On"))
+            msg.data = "Camera: On"
         else:
-            self.diagnostic_pub.publish(String(data="Camera: Off"))
+            msg.data = "Camera: Off"
+        
+        self.diagnostic_pub.publish(msg)
 
 def main(args=None):
     rclpy.init(args=args)

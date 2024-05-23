@@ -40,7 +40,7 @@ class UDPSender(Node):
         self.create_subscription(Image, 'video_stream', self.video_stream_callback, video_stream_qos)
         self.create_subscription(Image, 'radar_image', self.radar_stream_callback, video_stream_qos)
         self.create_subscription(NavSatFix, 'gps_data', self.gps_data_callback, gps_data_qos)
-        self.create_subscription(String, 'diagnostic_status', self.diagnostics_callback, gps_data_qos)
+        self.create_subscription(String, 'diagnostic_status', self.diagnostics_callback, 10)
         
         # UDP target IP and port
         self.gps_data_port = 9001
@@ -81,6 +81,7 @@ class UDPSender(Node):
         self.send_udp_data(gps_data_str, self.control_station_ip, self.gps_data_port)
     
     def diagnostics_callback(self, msg):
+        self.get_logger().info(f"Sending to control station: {msg}")
         self.send_udp_data(msg.data, self.control_station_ip, self.diagnostic_data_port)
 
 def main(args=None):
