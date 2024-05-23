@@ -5,7 +5,7 @@ from gps import *
 
 class GPSDriverNode(Node):
     def __init__(self):
-        super().__init__('gps_driver')
+        super().__init__('gps_driver_node')
         self.publisher_ = self.create_publisher(NavSatFix, 'gps/fix', 10)
         self.timer = self.create_timer(1.0, self.publish_gps_data)
         #gps daemon running on local host with port 2947

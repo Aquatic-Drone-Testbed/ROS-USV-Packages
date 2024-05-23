@@ -33,7 +33,7 @@ class FrameId:
 class Qauntum(Node):
 
     def __init__(self):
-        super().__init__('quantum')
+        super().__init__('quantum_node')
         # uncomment below to simulate locator
         # data = b'\x00\x00\x00\x00\x92\x8b\x80\xcb(\x00\x00\x00\x03\x00d\x00\x06\x08\x10\x00\x01\xb3\x01\xe8\x0e\n\x11\x002\x00\xe0\n\x0f\n6\x00'
         # bl = LocationInfo.parse(data[:36])

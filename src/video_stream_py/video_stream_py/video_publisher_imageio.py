@@ -8,7 +8,7 @@ import numpy as np
 
 class VideoPublisher(Node):
     def __init__(self):
-        super().__init__('video_publisher')
+        super().__init__('video_publisher_node')
 
         video_path = 0  # USB Camera Input
         self.video_reader = iio.imiter(f"<video{video_path}>")

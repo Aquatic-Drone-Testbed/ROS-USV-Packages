@@ -15,7 +15,7 @@ MAX_SPOKE_COUNT = 250
 
 class Slam(Node):
     def __init__(self):
-        super().__init__('slam')
+        super().__init__('slam_node')
         self.image_publisher_ = self.create_publisher(Image, 'radar_image', 10)
         self.subscription = self.create_subscription(
             Spoke,

@@ -18,7 +18,7 @@ class ThrusterControl(Node):
     GPIO_ESC_PIN2 = 13
 
     def __init__(self):
-        super().__init__('thruster_control')
+        super().__init__('thruster_control_node')
         self.subscription = self.create_subscription(
             String, 
             'thruster_control', 
