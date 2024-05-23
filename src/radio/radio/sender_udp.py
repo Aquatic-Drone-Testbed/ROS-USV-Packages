@@ -40,12 +40,13 @@ class UDPSender(Node):
         self.create_subscription(Image, 'video_stream', self.video_stream_callback, video_stream_qos)
         self.create_subscription(Image, 'radar_image', self.radar_stream_callback, video_stream_qos)
         self.create_subscription(NavSatFix, 'gps_data', self.gps_data_callback, gps_data_qos)
+        self.create_subscription(String, 'diagnostic_status', self.diagnostics_callback, 10)
         
         # UDP target IP and port
-        #adjust ports as needed
         self.gps_data_port = 9001
         self.video_stream_port = 9002
         self.radar_stream_port = 9003
+        self.diagnostic_data_port = 20000
 
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -64,14 +65,13 @@ class UDPSender(Node):
         buffer = io.BytesIO()
         pil_image.save(buffer, format='JPEG', quality=75)  # Adjust the quality as needed
         compressed_img = buffer.getvalue()
-        self.send_udp_data("Camera On", self.control_station_ip, self.video_stream_port)
         self.send_udp_data(compressed_img, self.control_station_ip, self.video_stream_port)
 
     def radar_stream_callback(self, msg):
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
         pil_image = PilImage.fromarray(cv_image)
         buffer = io.BytesIO()
-        pil_image.save(buffer, format='JPEG', quality=10)
+        pil_image.save(buffer, format='JPEG', quality=25)
         compressed_img = buffer.getvalue()
         self.send_udp_data(compressed_img, self.control_station_ip, self.radar_stream_port)
         
@@ -80,6 +80,10 @@ class UDPSender(Node):
         self.get_logger().info(f"sending to control station: {gps_data_str}")
         self.send_udp_data(gps_data_str, self.control_station_ip, self.gps_data_port)
     
+    def diagnostics_callback(self, msg):
+        self.get_logger().info(f"Sending to control station: {msg}")
+        self.send_udp_data(msg.data, self.control_station_ip, self.diagnostic_data_port)
+
 def main(args=None):
     rclpy.init(args=args)
     udp_sender_node = UDPSender()

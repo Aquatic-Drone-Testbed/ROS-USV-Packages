@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
+from std_msgs.msg import String
 from gps import *
 
 class GPSDriverNode(Node):
@@ -8,6 +9,10 @@ class GPSDriverNode(Node):
         super().__init__('gps_driver_node')
         self.publisher_ = self.create_publisher(NavSatFix, 'gps/fix', 10)
         self.timer = self.create_timer(1.0, self.publish_gps_data)
+
+        self.diagnostic_pub = self.create_publisher(String, 'diagnostic_status', 10)
+        self.diagnostic_timer = self.create_timer(3.0, self.publish_gps_heartbeat)
+        self.has_signal = False
         #gps daemon running on local host with port 2947
         self.gps_session = gps(mode=WATCH_ENABLE)
         self.get_logger().info(f"gps_session created with mode={WATCH_ENABLE}")
@@ -26,24 +31,19 @@ class GPSDriverNode(Node):
                     gps_msg.altitude = report.alt
                 self.publisher_.publish(gps_msg)
                 self.get_logger().info(f"Published real GPS data:\n{gps_msg}")
+                self.has_signal = True
             else:
                 self.get_logger().warn(f"no fix")
+                self.has_signal = False
         except Exception as e:
             self.get_logger().error(f"An error occurred: {e}")
             self.get_logger().warn('GPSD has terminated')
 
-
-    # def publish_gps_data(self):
-    #     # Create a NavSatFix message with static position
-    #     gps_msg = NavSatFix()
-    #     gps_msg.header.stamp = self.get_clock().now().to_msg()
-    #     gps_msg.header.frame_id = 'gps'
-    #     gps_msg.latitude = 48.8566  # Latitude of Paris, France
-    #     gps_msg.longitude = 2.3522   # Longitude of Paris, France
-    #     gps_msg.altitude = 35.0      # Altitude in meters
-    #     # Publish the static position
-    #     self.publisher_.publish(gps_msg)
-    #     self.get_logger().info('Published static GPS position')
+    def publish_gps_heartbeat(self):
+        if self.has_signal:
+            self.diagnostic_pub.publish(String(data="GPS: Has Fix"))
+        else:
+            self.diagnostic_pub.publish(String(data="GPS: No Fix"))
 
 def main(args=None):
     rclpy.init(args=args)
