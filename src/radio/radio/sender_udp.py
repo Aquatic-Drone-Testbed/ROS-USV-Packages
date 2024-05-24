@@ -43,9 +43,9 @@ class UDPSender(Node):
         self.create_subscription(String, 'diagnostic_status', self.diagnostics_callback, 10)
         
         # UDP target IP and port
-        self.gps_data_port = 9001
-        self.video_stream_port = 9002
-        self.radar_stream_port = 9003
+        self.gps_data_port = 39001
+        self.video_stream_port = 39002
+        self.radar_stream_port = 39003
         self.diagnostic_data_port = 20000
 
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

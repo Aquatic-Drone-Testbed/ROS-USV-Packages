@@ -11,7 +11,7 @@ class UDPReceiver(Node):
     def __init__(self):
         super().__init__('udp_receiver_node')
         # Declare and obtain the UDP port as a parameter
-        self.declare_parameter('port', 9000)  # Default port is 9000
+        self.declare_parameter('port', 39000)  # Default port is 39000
         self.declare_parameter('host', "127.0.0.1")  # Default ip addr is local host
         
         self.port = self.get_parameter('port').get_parameter_value().integer_value
