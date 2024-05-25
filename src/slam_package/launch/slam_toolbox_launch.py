@@ -9,7 +9,8 @@ import os
 
 def generate_launch_description():
     slam_package_dir = get_package_share_directory('slam_package')
-    
+    static_transforms_launch_path = os.path.join(slam_package_dir, 'launch', 'static_transforms_launch.py')
+    print(f"Using launch file: {static_transforms_launch_path}")
     return LaunchDescription([
         
         # DeclareLaunchArgument(
@@ -43,7 +44,9 @@ def generate_launch_description():
         #     executable='rviz2',
         #     name='rviz2',
         #     output='screen',
-        #     arguments=['-d', 'install/slam_package/share/slam_package/rviz/slam_toolbox_config.rviz'],
+        #     parameters=[os.path.join(slam_package_dir, 'config', 'qos_overrides.yaml'),
+        #                 {'use_sim_time': True}],
+        #     arguments=['-d', os.path.join(slam_package_dir, 'rviz', 'slam_toolbox_config.rviz')],
         #     condition=IfCondition(LaunchConfiguration('use_rviz'))
         # )
     ])

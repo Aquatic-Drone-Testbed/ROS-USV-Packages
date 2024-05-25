@@ -3,18 +3,26 @@ from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import PointCloud2, PointField
 import roslibpy
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
 class Ros1ToRos2Bridge(Node):
 
     def __init__(self):
         super().__init__('ros1_to_ros2_bridge')
-
+        
         self.ros = roslibpy.Ros(host='localhost', port=9090)
         self.ros.run()
 
+        # QoS profile with RELIABLE reliability
+        qos_profile = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10
+        )
+
         # Publishers
-        self.odom_pub = self.create_publisher(Odometry, '/ros2_radar_odom', 10)
-        self.pointcloud_pub = self.create_publisher(PointCloud2, '/ros2_radar_registered', 10)
+        self.odom_pub = self.create_publisher(Odometry, '/ros2_radar_odom', qos_profile)
+        self.pointcloud_pub = self.create_publisher(PointCloud2, '/ros2_radar_registered', qos_profile)
 
         # Subscribers to ROS1 topics via roslibpy
         self.odom_listener = roslibpy.Topic(self.ros, '/radar_odom', 'nav_msgs/Odometry')
@@ -27,8 +35,6 @@ class Ros1ToRos2Bridge(Node):
         msg = Odometry()
         msg.header.stamp.sec = message['header']['stamp']['secs']
         msg.header.stamp.nanosec = message['header']['stamp']['nsecs']
-        #msg.header.frame_id = message['header']['frame_id']
-        #msg.child_frame_id = message['child_frame_id']
         msg.header.frame_id = 'odom'
         msg.child_frame_id = 'base_link'
 
@@ -53,47 +59,25 @@ class Ros1ToRos2Bridge(Node):
 
     def pointcloud_callback(self, message):
         msg = PointCloud2()
+        
         msg.header.stamp.sec = message['header']['stamp']['secs']
         msg.header.stamp.nanosec = message['header']['stamp']['nsecs']
-        #msg.header.frame_id = message['header']['frame_id']
-        msg.header.frame_id = 'base_link'
+        msg.header.frame_id = 'radar_frame'
         
-        #msg.height = message['height']
-        #msg.width = message['width']
-        msg.height = 1  # For 2D point clouds, height is typically 1
-        msg.width = message['width']  # Number of points in the cloud
+        msg.height = message['height']
+        msg.width = message['width']
         msg.fields = [
             PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
             PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
-            PointField(name='intensity', offset=8, datatype=PointField.FLOAT32, count=1),  # If used
+            PointField(name='intensity', offset=8, datatype=PointField.FLOAT32, count=1),
         ]
-        # Ensure the total size sums up to 32 bytes
-        # If there are other fields, ensure their offsets and sizes are correctly set
     
         msg.is_bigendian = message['is_bigendian']
         msg.point_step = message['point_step']
         msg.row_step = message['row_step']
         
-        #print(msg.height, msg.width, msg.point_step)
-        
-        
         data_bytes = message['data'].encode()
         msg.data = data_bytes
-        #msg.data = bytes(message['data'])
-        # Debugging the data field
-        # try:
-        #     if isinstance(message['data'], list):
-        #         print("here")
-        #         data_bytes = bytes(message['data'])
-        #     else:
-        #         data_bytes = message['data'].encode()
-
-        #     msg.data = data_bytes
-        #     print(f"Data field type: {type(data_bytes)}, length: {len(data_bytes)}")
-        # except Exception as e:
-        #     print(f"Error processing data field: {e}")
-        #     return
-
         msg.is_dense = message['is_dense']
 
         self.pointcloud_pub.publish(msg)
@@ -106,14 +90,11 @@ class Ros1ToRos2Bridge(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-
     node = Ros1ToRos2Bridge()
-
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-
     node.destroy_node()
     rclpy.shutdown()
 
