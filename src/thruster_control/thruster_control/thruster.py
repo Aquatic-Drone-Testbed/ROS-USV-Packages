@@ -12,7 +12,7 @@ class ThrusterControl(Node):
     ESC_BASE_VAL = 1500
     ESC_MAX_VAL = 1850
     ESC_MIN_VAL = 1150
-    ESC_MAGNITUE = ESC_MAX_VAL - ESC_BASE_VAL
+    ESC_MAGNITUDE = ESC_MAX_VAL - ESC_BASE_VAL
 
     GPIO_ESC_PIN1 = 12
     GPIO_ESC_PIN2 = 13
@@ -22,7 +22,7 @@ class ThrusterControl(Node):
         self.subscription = self.create_subscription(
             String, 
             'thruster_control', 
-            self.listener_callback,  #receives messages/ processes controller input
+            self.update_direction,  #receives messages/ processes controller input
             10)
 
         self.pi = pigpio.pi() # connect to pi gpio
@@ -35,14 +35,14 @@ class ThrusterControl(Node):
 
         time.sleep(0.7)
         
-        self.timer = self.create_timer(0.01, self.timer_callback)  # Adjust PWM vaue at most every 0.1 seconds
+        self.timer = self.create_timer(0.01, self.update_pwm)  # update pwm 100 times per second
         
         self.get_logger().info('Thruster control initialized.')
         # self.get_logger().info(f"{'Timestamp':<10} | {'Left ESC Pulsewidth':<17} | {'Right ESC Pulsewidth'}")
         self.get_logger().info("-" * 60)  # Print a separator line
 
 
-    def listener_callback(self, msg):
+    def update_direction(self, msg):
         if msg.data == "RADIO_TIMEOUT":
             self.get_logger().warn('Radio timed out... Resetting thrusters to 0')
             self.base_thrust = 0
@@ -51,7 +51,7 @@ class ThrusterControl(Node):
         
         #Adjust thruster values
         direction, value_str = msg.data.split(',')
-        value = int(value_str)/ThrusterControl.ESC_MAGNITUE # normalize to [-1, 1]
+        value = int(value_str)/ThrusterControl.ESC_MAGNITUDE # normalize to [-1, 1]
         
         if direction == "ABS_Y":
             self.base_thrust = value
@@ -59,13 +59,9 @@ class ThrusterControl(Node):
             self.delta_thrust = value
 
 
-    def timer_callback(self):
-        self.update_thrusters(self.base_thrust, self.delta_thrust)
-
-
-    def update_thrusters(self, base, delta):
-        left_val = ThrusterControl.ESC_BASE_VAL + ThrusterControl.ESC_MAGNITUE * (base + delta)
-        right_val = ThrusterControl.ESC_BASE_VAL + ThrusterControl.ESC_MAGNITUE * (base - delta)
+    def update_pwm(self):
+        left_val = ThrusterControl.ESC_BASE_VAL + ThrusterControl.ESC_MAGNITUDE * (self.base_thrust + self.delta_thrust)
+        right_val = ThrusterControl.ESC_BASE_VAL + ThrusterControl.ESC_MAGNITUDE * (self.base_thrust - self.delta_thrust)
 
         # clamp between min and max value
         left_val = np.clip(round(left_val), ThrusterControl.ESC_MIN_VAL, ThrusterControl.ESC_MAX_VAL)

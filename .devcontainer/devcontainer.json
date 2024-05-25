@@ -14,11 +14,11 @@
         "vscode": {
             "extensions":[
                 "ms-vscode.cpptools-extension-pack",
-				"donjayamanne.python-extension-pack",
-				"eamodio.gitlens",
-				"ms-iot.vscode-ros",
-				"mhutchie.git-graph"
-			]
+                "ms-python.python",
+                "eamodio.gitlens",
+                "ms-iot.vscode-ros",
+                "mhutchie.git-graph",
+            ]
         }
     },
     // port defintiions

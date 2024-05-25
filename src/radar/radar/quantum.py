@@ -25,6 +25,7 @@ DEFAULT_NUM_SPOKES = 250
 MAX_INTENSITY = 128
 MIN_RANGE_INDEX = 0
 MAX_RANGE_INDEX = 20
+
 class FrameId:
     RM_REPORT = 0x00010001
     QUANTUM_REPORT = 0x00280002
@@ -34,13 +35,15 @@ class Qauntum(Node):
 
     def __init__(self):
         super().__init__('quantum_node')
+        
+        self.declare_parameter('host', "127.0.0.1")  # Default ip addr is local host
+        self.host = self.get_parameter('host').get_parameter_value().string_value
+        
         # uncomment below to simulate locator
         # data = b'\x00\x00\x00\x00\x92\x8b\x80\xcb(\x00\x00\x00\x03\x00d\x00\x06\x08\x10\x00\x01\xb3\x01\xe8\x0e\n\x11\x002\x00\xe0\n\x0f\n6\x00'
         # bl = LocationInfo.parse(data[:36])
         # self.quantum_location = LocationInfo(*bl)
         self.quantum_location = self.locate_quantum() # this might take a while to return
-        self.declare_parameter('host', "127.0.0.1")  # Default ip addr is local host
-        self.host = self.get_parameter('host').get_parameter_value().string_value
         
         self.command_socket = self.create_command_socket() # socket for controlling radar
         self.report_socket = self.create_report_socket() # socket for receiving radar data
@@ -55,9 +58,9 @@ class Qauntum(Node):
             1, 
             self.standby_timer_callback, 
             command_mutex_callback_group_)
-        # request polar image every 3 second
+        # request polar image every 2.5 second
         self.polar_image_timer = self.create_timer(
-            3, 
+            2.5, 
             self.imager_callback, 
             reentrant_callback_group)
         # request data from radar asap
@@ -120,8 +123,8 @@ class Qauntum(Node):
         self.get_logger().info(f'Initialized locator socket')
         
         # loop until Raymarine Quantum is found
+        self.get_logger().info(f'Locating radar...')
         while True:
-            self.get_logger().warn(f'Locating radar...')
             data, senderaddr = locator_socket.recvfrom(1024)
             self.get_logger().debug(f'received {len(data)} bytes from {senderaddr[0]}:{senderaddr[1]}')
             if len(data) != 36: continue # ignore any packets not 36 bytes
@@ -156,7 +159,7 @@ class Qauntum(Node):
         self.transmit_command(control_message.STAY_ALIVE_1SEC)
         if (self.alive_counter%5 == 0):
             self.transmit_command(control_message.STAY_ALIVE_5SEC)
-        self.get_logger().info(f'Sent stay alive command')
+        self.get_logger().debug(f'Sent stay alive command')
 
 
     def transmit_command(self, command) -> None:
@@ -337,13 +340,13 @@ class Qauntum(Node):
         cv2.imwrite('test/polar_image.jpg', polar_image)
         
         self.polar_image_publisher.publish(self.bridge.cv2_to_imgmsg(polar_image, encoding="passthrough"))
-        self.get_logger().info(f'Published polar image of dimension {polar_image.shape} (updated {self.spokes_updated} spokes at zoom level {self.range_index})')
         
         I, D, P = RadarFilter.generate_map(r=polar_image, k=None, p=None, K=None, area_threshold=50, gamma=None)
         
         ctrl_station_img = I
         self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(ctrl_station_img, encoding="passthrough"))
-        self.get_logger().info(f'Published image of dimension {ctrl_station_img.shape}')
+        
+        self.get_logger().info(f'Published images (updated {self.spokes_updated} spokes at zoom level {self.range_index})')
         
         self.spokes = np.zeros((self.num_spokes, MAX_SPOKE_LENGTH), np.uint8)
         self.spokes_updated = 0
@@ -355,18 +358,24 @@ class Qauntum(Node):
                 self.start_scan()
             case 'stop_scan':
                 self.stop_scan()
+            case 'toggle_scan':
+                self.scanning = not self.scanning
+                if self.scanning: self.start_scan()
+                else: self.stop_scan()
             case 'zoom_in':
                 self.zoom_in()
             case 'zoom_out':
                 self.zoom_out()
             case _:
-                self.stop_scan()
+                self.get_logger().error(f'unknown radar control: {msg.data}')
+
 
     def publish_radar_heartbeat(self):
         if self.scanning:
             self.diagnostic_pub.publish(String(data="Radar: Scanning"))
         else:
             self.diagnostic_pub.publish(String(data="Radar: Standby"))
+
 
 def main(args=None):
     rclpy.init(args=args)

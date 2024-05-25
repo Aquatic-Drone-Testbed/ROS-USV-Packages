@@ -14,7 +14,7 @@ class Test(Node):
         super().__init__('test_node')
         self.subscription = self.create_subscription(
             Image,
-            'Navtech/Polar',
+            'USV/Polar',
             self.write_image,
             10)
         

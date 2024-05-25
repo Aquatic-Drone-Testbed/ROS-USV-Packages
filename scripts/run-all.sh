@@ -8,8 +8,9 @@ export RCUTILS_LOGGING_USE_STDOUT=1
 
 ./scripts/run-quantum.sh &
 
+./scripts/run-radio.sh &
+
 ./scripts/run-thruster.sh &
-./scripts/run-radio-receiver.sh &
 
 ./scripts/run-imu.sh &
 ./scripts/run-gps.sh &
@@ -17,7 +18,6 @@ export RCUTILS_LOGGING_USE_STDOUT=1
 # ./scripts/run-navsat_transform_node.sh &
 # ./scripts/run-dual-ekf-navsat.sh &
 
-./scripts/run-radio-sender.sh &
 ./scripts/run-video.sh &
 
 # Keep this script alive forever

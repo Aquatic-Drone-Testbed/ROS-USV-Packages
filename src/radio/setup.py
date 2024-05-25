@@ -20,8 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'receiver_udp = radio.receiver_udp:main',
-            'sender_udp = radio.sender_udp:main',
+            'server = radio.server:main',
         ],
     },
 )
