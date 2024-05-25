@@ -11,14 +11,9 @@ from ament_index_python.packages import get_package_share_directory
 class VideoPublisher(Node):
     def __init__(self):
         super().__init__('video_publisher_node')
-
-        package_share_directory = get_package_share_directory('video_stream_py')
-        video_path = os.path.join(package_share_directory, 'resource', 'test.mp4')
-        self.video_reader = iio.imiter(video_path)
-        # video_path = 0  # USB Camera Input
         
-        # video_path = 0  # USB Camera Input
-        # self.video_reader = iio.imiter(f"<video{video_path}>")
+        video_path = 0  # USB Camera Input
+        self.video_reader = iio.imiter(f"<video{video_path}>")
         self.frame_generator = iter(self.video_reader)
 
         fps = 30

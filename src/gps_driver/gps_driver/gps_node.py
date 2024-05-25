@@ -30,7 +30,7 @@ class GPSDriverNode(Node):
                 if hasattr(report, 'alt') and report.mode == 3:
                     gps_msg.altitude = report.alt
                 self.publisher_.publish(gps_msg)
-                self.get_logger().info(f"Published real GPS data:\n{gps_msg}")
+                self.get_logger().debug(f"Published real GPS data:\n{gps_msg}")
                 self.has_signal = True
             else:
                 self.get_logger().warn(f"no fix")

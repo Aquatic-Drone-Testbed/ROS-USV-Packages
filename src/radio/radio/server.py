@@ -172,7 +172,7 @@ class RadioServer(Node):
         pil_image = PilImage.fromarray(cv_image) # Convert to Pillow image (allows us to avoid using openCV)
         # Compress the image as JPEG
         buffer = io.BytesIO()
-        pil_image.save(buffer, format='JPEG', quality=10)  # Adjust the quality as needed
+        pil_image.save(buffer, format='JPEG', quality=80)  # Adjust the quality as needed
         compressed_img = buffer.getvalue()
         self.send_to_ctrl_station(compressed_img, RadioServer.VIDEO_STREAM_PORT)
 
@@ -181,7 +181,7 @@ class RadioServer(Node):
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
         pil_image = PilImage.fromarray(cv_image)
         buffer = io.BytesIO()
-        pil_image.save(buffer, format='JPEG', quality=10)
+        pil_image.save(buffer, format='JPEG', quality=80)
         compressed_img = buffer.getvalue()
         self.send_to_ctrl_station(compressed_img, RadioServer.RADAR_STREAM_PORT)
 
