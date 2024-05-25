@@ -22,7 +22,7 @@ class ThrusterControl(Node):
         self.subscription = self.create_subscription(
             String, 
             'thruster_control', 
-            self.update_direction,  #receives messages/ processes controller input
+            self.update_direction,  #receives messages/ processes controller input``
             10)
 
         self.pi = pigpio.pi() # connect to pi gpio
@@ -51,7 +51,7 @@ class ThrusterControl(Node):
         
         #Adjust thruster values
         direction, value_str = msg.data.split(',')
-        value = int(value_str)/ThrusterControl.ESC_MAGNITUDE # normalize to [-1, 1]
+        value = float(value_str) # [-1, 1]
         
         if direction == "ABS_Y":
             self.base_thrust = value
@@ -71,8 +71,7 @@ class ThrusterControl(Node):
         self.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN1, left_val)
         self.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN2, right_val)
 
-        timestamp = time.strftime("%H:%M:%S", time.localtime())
-        self.get_logger().debug(f"{timestamp:<10} | {f'Left ESC: {left_val}':<17} | Right ESC: {right_val}")
+        self.get_logger().debug(f"{self.base_thrust = } {self.delta_thrust = } {left_val = } {right_val = }")
 
 
 def main(args=None):

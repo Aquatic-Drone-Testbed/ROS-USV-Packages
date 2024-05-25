@@ -136,29 +136,32 @@ class RadioServer(Node):
             self.send_to_ctrl_station(RadioServer.ACKNOWLEDGE_CONNECTION_STR.encode(), self.control_station_port)
             return
         
-        # Assume data_str format is "data_type:data_value"
-        data_type, data_value = data_str.split(':')
+        try: # Assume data_str format is "data_type:data_value"
+            data_type, data_value = data_str.split(':')
+        except ValueError as e:
+            self.get_logger().error(f'Failed to parse {data_str} from control station')
+            return
         self.get_logger().debug(f"{data_type=}")
         self.get_logger().debug(f"{data_value=}")
         
         msg = String()
         
         match data_type:
-            case "CTRL":
-                msg.data = data_value
+            case "ctrl":
+                msg.data = data_value # special case
                 self.thruster_controller_publisher.publish(msg)
-            case "CAM TOGGLE":
-                msg.data = data_value
-                if data_value == "CAM TOGGLE":
-                    self.camera_control_publisher.publish(msg)
-            case "RADAR TOGGLE":
-                msg.data = "toggle_scan"
+            case "cam":
+                if data_value == "toggle_cam":
+                    msg.data = "CAM TOGGLE"
+                self.camera_control_publisher.publish(msg)
+            case "radar":
+                if data_value == "toggle_scan":
+                    msg.data = "toggle_scan"
+                elif data_value == "zoom_in":
+                    msg.data = "zoom_in"
+                elif data_value == "zoom_out":
+                    msg.data = "zoom_out"
                 self.radar_control_publisher.publish(msg)
-            case "RADAR RANGE":
-                pass
-                # msg.data = "cycle range"
-                # self.radar_control_publisher.publish(msg)
-                # self.get_logger().info(f'Publishing to radar_control: {msg.data}')
             case _:
                 self.get_logger().error(f"Unknown data type: {data_type}")
 
