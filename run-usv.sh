@@ -14,11 +14,11 @@ export RCUTILS_LOGGING_USE_STDOUT=1
 
 ./scripts/run-imu.sh &
 ./scripts/run-gps.sh &
-./scripts/run-ekf.sh &
+# ./scripts/run-ekf.sh &
 # ./scripts/run-navsat_transform_node.sh &
 # ./scripts/run-dual-ekf-navsat.sh &
 
-./scripts/run-video.sh &
+# ./scripts/run-video.sh &
 
 # Keep this script alive forever
 sleep infinity

@@ -5,11 +5,13 @@ from std_msgs.msg import String
 from cv_bridge import CvBridge
 import imageio.v3 as iio
 import numpy as np
+import os
+from ament_index_python.packages import get_package_share_directory
 
 class VideoPublisher(Node):
     def __init__(self):
         super().__init__('video_publisher_node')
-
+        
         video_path = 0  # USB Camera Input
         self.video_reader = iio.imiter(f"<video{video_path}>")
         self.frame_generator = iter(self.video_reader)
