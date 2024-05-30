@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 
 MAX_SPOKE_LENGTH = 256
+folder = 'test'
 
 def generate_map(r, k, p, K, area_threshold, gamma):
     """
@@ -14,7 +15,7 @@ def generate_map(r, k, p, K, area_threshold, gamma):
         gamma (_type_): angular resolution to discretize the polar coordinate 
     """
     I = generate_radar_image(r, K)
-    D = detect_contour(filter_image(I,binary_threshold=128))
+    D = detect_contour(filter_image(I))
     P = extract_coastline(D, area_threshold=10, angular_resolution=None, K=None)
     
     return I, D, P
@@ -39,12 +40,12 @@ def generate_radar_image(spokes, K):
     
     # get_logger().info(f'{radar_image=} {radar_image.shape}')
     # cv2.imshow('raw image', radar_image); cv2.waitKey(0)
-    cv2.imwrite('test/radar_image.jpg', radar_image)
+    cv2.imwrite(f'{folder}/radar_image.jpg', radar_image)
     
     return radar_image
 
 
-def filter_image(radar_image, binary_threshold):
+def filter_image(radar_image):
     """apply morphological and bilateral filters for denoising
     and convert grayscale radar_image to binary image according to 
     predetermined threshold intensity value
@@ -59,19 +60,19 @@ def filter_image(radar_image, binary_threshold):
     # [TODO]: apply morphological and bilateral filters
     erosion = cv2.erode(radar_image, np.ones((3, 3), np.uint8), iterations=1)
     # cv2.imshow('erosion', erosion); cv2.waitKey(0)
-    cv2.imwrite('test/erosion.jpg', erosion)
+    cv2.imwrite(f'{folder}/erosion.jpg', erosion)
     dilation = cv2.dilate(erosion, np.ones((3, 3), np.uint8), iterations=1)
     # cv2.imshow('dilation', dilation); cv2.waitKey(0)
-    cv2.imwrite('test/dilation.jpg', dilation)
+    cv2.imwrite(f'{folder}/dilation.jpg', dilation)
     
-    bilateral = cv2.bilateralFilter(dilation, 9, 100, 100)
+    bilateral = cv2.bilateralFilter(dilation, 9, 200, 200)
     # cv2.imshow('bilateral', bilateral); cv2.waitKey(0)
-    cv2.imwrite('test/bilateral.jpg', bilateral)
+    cv2.imwrite(f'{folder}/bilateral.jpg', bilateral)
     
     # [TODO]: adjust threshold intensity value. range:[0,255]
-    _, binary_image = cv2.threshold(bilateral, binary_threshold, 255, cv2.THRESH_BINARY)
+    _, binary_image = cv2.threshold(bilateral, 32, 255, cv2.THRESH_BINARY)
     # cv2.imshow('threshold', binary_image); cv2.waitKey(0)
-    cv2.imwrite('test/binary_image.jpg', binary_image)
+    cv2.imwrite(f'{folder}/binary_image.jpg', binary_image)
     
     return binary_image
 
@@ -97,7 +98,7 @@ def extract_coastline(contours, area_threshold, angular_resolution=None, K=None)
     contour = np.zeros((2*MAX_SPOKE_LENGTH, 2*MAX_SPOKE_LENGTH, 3), dtype=np.uint8)
     cv2.drawContours(contour, landmasses, -1, (255,255,255), -1)
     # cv2.imshow('contour', contour); cv2.waitKey(0)
-    cv2.imwrite('test/contour.jpg', contour)
+    cv2.imwrite(f'{folder}/contour.jpg', contour)
     
     height, width = contour.shape[:2]
     polar = cv2.warpPolar(src=contour, dsize=(MAX_SPOKE_LENGTH, 0), center=(width/2, height/2), maxRadius=width/2, flags=cv2.WARP_POLAR_LINEAR)
@@ -116,6 +117,6 @@ def extract_coastline(contours, area_threshold, angular_resolution=None, K=None)
         maxRadius=MAX_SPOKE_LENGTH, flags=cv2.WARP_INVERSE_MAP)
     
     # cv2.imshow('coastline', coastline); cv2.waitKey(0)
-    cv2.imwrite('test/coastline.jpg', coastline)
+    cv2.imwrite(f'{folder}/coastline.jpg', coastline)
     
     return coastline
