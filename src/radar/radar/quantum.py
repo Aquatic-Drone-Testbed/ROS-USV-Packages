@@ -313,7 +313,10 @@ class Qauntum(Node):
         if self.spokes is None: return
 
         self.num_spokes = qs.num_spokes
-        self.spokes[qs.azimuth, :len(qs.data)] = qs.data
+        # Quantum Q24C spokes are 180 degrees out of phase
+        # i.e. 0th azimuth points towards the **back** of the radar
+        # and 125th azimuth points towards the **front** of the radar
+        self.spokes[(qs.azimuth + DEFAULT_NUM_SPOKES//2)%DEFAULT_NUM_SPOKES, :len(qs.data)] = qs.data
         self.spokes_updated += 1
         self.get_logger().debug(f'Received spoke #{qs.azimuth} ({self.spokes_updated}/{self.num_spokes})')
         
