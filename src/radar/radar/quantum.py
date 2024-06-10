@@ -60,7 +60,7 @@ class Qauntum(Node):
             command_mutex_callback_group_)
         # request polar image every 2.5 second
         self.polar_image_timer = self.create_timer(
-            2.7, 
+            2.5, 
             self.imager_callback, 
             reentrant_callback_group)
         # request data from radar asap
