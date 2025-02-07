@@ -3,6 +3,8 @@ import struct
 import numpy as np
 import cv2
 from cv_bridge import CvBridge
+import time
+import os
 
 import rclpy
 from rclpy.node import Node
@@ -19,6 +21,9 @@ from radar.packets.rmr_report import RMReport
 from radar.packets.quantum_scan import QuantumScan
 from radar.packets.quantum_report import QuantumReport
 import radar.filter as RadarFilter
+
+#testing values
+PREV_SPOKE = 0
 
 MAX_SPOKE_LENGTH = 256
 DEFAULT_NUM_SPOKES = 250
@@ -60,7 +65,7 @@ class Qauntum(Node):
             command_mutex_callback_group_)
         # request polar image every 2.5 second
         self.polar_image_timer = self.create_timer(
-            2.5, 
+            2.65, 
             self.imager_callback, 
             reentrant_callback_group)
         # request data from radar asap
@@ -118,6 +123,11 @@ class Qauntum(Node):
         
         # Tell the operating system to add the socket to the multicast group
         # on all interfaces.
+        
+        # Bind socket to proper network interface
+        #locator_socket.setsockopt(socket.SOL_SOCKET, 25, 'enxa0cec8b67b9f')
+        
+        
         mreq = struct.pack('4sL', socket.inet_aton(multicast_group), socket.INADDR_ANY)
         locator_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         self.get_logger().info(f'Initialized locator socket')
@@ -303,15 +313,21 @@ class Qauntum(Node):
 
 
     def process_quantum_scan_data(self, data: bytes):
+        
+        global PREV_SPOKE
+        
         if len(data) < 20: return # ensure packet is longer than 20 bytes
         
         qheader = QuantumScan.parse_header(data[:20])
         qdata = QuantumScan.parse_data(data[20:])
         qs = QuantumScan(*qheader, qdata)
+        
+        #f = open("/home/ws/test/slam_radar_test/radar_data.txt", "a") 
+        #f.write(f'[{time.time()}]\tQ_Header<{qheader}>\tQ_Data<{qdata}>\n')
+        
         self.get_logger().debug(f'{qs}')
         
         if self.spokes is None: return
-
         self.num_spokes = qs.num_spokes
         # Quantum Q24C spokes are 180 degrees out of phase
         # i.e. 0th azimuth points towards the **back** of the radar
@@ -319,6 +335,11 @@ class Qauntum(Node):
         self.spokes[(qs.azimuth + DEFAULT_NUM_SPOKES//2)%DEFAULT_NUM_SPOKES, :len(qs.data)] = qs.data
         self.spokes_updated += 1
         self.get_logger().debug(f'Received spoke #{qs.azimuth} ({self.spokes_updated}/{self.num_spokes})')
+        
+        #if qs.azimuth != ((PREV_SPOKE+1) % DEFAULT_NUM_SPOKES):
+            #print("SPOKE SEQUENCE MISMATCH! " + str(qs.azimuth) + " " + str(PREV_SPOKE) + "\n")
+        
+        #PREV_SPOKE = qs.azimuth
         
         # msg = Spoke()
         # msg.azimuth = qs.azimuth
@@ -339,9 +360,14 @@ class Qauntum(Node):
 
 
     def imager_callback(self):
-        polar_image = np.copy(self.spokes/MAX_INTENSITY * 255).astype(np.uint8)
+        #if self.spokes_updated < 250:
+        #    return
+        print(f'imager_callback spokes_updated before: {self.spokes_updated}')
+        #polar_image = np.copy(self.spokes/MAX_INTENSITY * 255).astype(np.uint8)
+        polar_image = np.copy(self.spokes).astype(np.uint8)
         cv2.imwrite('test/polar_image.jpg', polar_image)
-        
+        #cv2.imwrite(f'test/slam_radar_test/polar/polar_{time.time()}.jpg', polar_image)
+
         self.polar_image_publisher.publish(self.bridge.cv2_to_imgmsg(polar_image, encoding="passthrough"))
         
         I, D, P = RadarFilter.generate_map(r=polar_image, k=None, p=None, K=None, area_threshold=50, gamma=None)
@@ -352,6 +378,7 @@ class Qauntum(Node):
         self.get_logger().info(f'Published images (updated {self.spokes_updated} spokes at zoom level {self.range_index})')
         
         self.spokes = np.zeros((self.num_spokes, MAX_SPOKE_LENGTH), np.uint8)
+        #self.spokes = np.full((self.num_spokes, 96), 255)
         self.spokes_updated = 0
 
 

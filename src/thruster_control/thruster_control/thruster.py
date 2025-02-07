@@ -51,7 +51,11 @@ class ThrusterControl(Node):
         
         #Adjust thruster values
         direction, value_str = msg.data.split(',')
+        
         value = float(value_str) # [-1, 1]
+        
+        print(f"{direction}-{value}")
+
         
         if direction == "ABS_Y":
             self.base_thrust = value

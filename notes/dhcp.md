@@ -56,19 +56,19 @@ prerequire installation:
 - **Edit `/etc/dhcp/dhcp.conf`:** Provide DHCP server with a range of IP addresses to distribute and specify network settings.
 
     ```plaintext
-    subnet 193.168.1.0 netmask 255.255.255.0 {
-      range 193.168.1.10 193.168.1.49;
-      range 193.168.1.51 193.168.1.100;
-      option domain-name-servers 8.8.8.8;
-      option routers 193.168.1.1;
-      option broadcast-address 193.168.1.255;
-      default-lease-time 6000;
-      max-lease-time 7200;
-    }
-    host radar {
-      hardware ethernet C4:93:00:2C:A9:81;
-      fixed-address 193.168.1.50;
-    }
+subnet 193.168.1.0 netmask 255.255.255.0 {
+  range 193.168.1.10 193.168.1.49;
+  range 193.168.1.51 193.168.1.100;
+  option domain-name-servers 8.8.8.8;
+  option routers 193.168.1.1;
+  option broadcast-address 193.168.1.255;
+  default-lease-time 6000;
+  max-lease-time 7200;
+}
+host radar {
+  hardware ethernet C4:93:00:2C:A9:81;
+  fixed-address 193.168.1.50;
+}
     ```
 
 - **Configure `/etc/default/isc-dhcp-server`:** Designate which network interfaces the DHCP server should use.
