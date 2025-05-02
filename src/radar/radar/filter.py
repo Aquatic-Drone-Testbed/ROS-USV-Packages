@@ -43,7 +43,7 @@ def generate_radar_image(spokes, K):
     # get_logger().info(f'{radar_image=} {radar_image.shape}')
     # cv2.imshow('raw image', radar_image); cv2.waitKey(0)
     cv2.imwrite(f'{folder}/radar_image.jpg', radar_image)
-    #cv2.imwrite(f'test/slam_radar_test/radar/radar_{time.time()}.jpg', radar_image)
+    cv2.imwrite(f'test/slam_radar_test/radar/radar_{time.time()}.jpg', radar_image)
 
     
     return radar_image

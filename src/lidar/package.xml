@@ -4,7 +4,7 @@
   <name>lidar</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="pk421933605@gmail.com">seamate-docker</maintainer>
+  <maintainer email="todo@todo.todo">seamate-docker</maintainer>
   <license>TODO: License declaration</license>
 
   <test_depend>ament_copyright</test_depend>

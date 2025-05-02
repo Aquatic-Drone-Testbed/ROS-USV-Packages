@@ -3,7 +3,7 @@ from std_msgs.msg import String
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-import pigpio
+from rpi_hardware_pwm import HardwarePWM
 import time
 import numpy as np
 
@@ -19,51 +19,33 @@ class ThrusterControl(Node):
 
     def __init__(self):
         super().__init__('thruster_control_node')
-        self.subscription = self.create_subscription(
-            String, 
-            'thruster_control', 
-            self.update_direction,  #receives messages/ processes controller input``
-            10)
-
-        self.pi = pigpio.pi() # connect to pi gpio
-        if not self.pi.connected:
-            self.get_logger().error('Not connected to Raspberry Pi GPIO. Exiting...')
-            rclpy.shutdown()
-
         self.base_thrust = 0
         self.delta_thrust = 0
+        self.subscription = self.create_subscription(
+            String, 
+            'thruster_input', 
+            self.update_pwm,  #receives messages/ processes controller input``
+            10)
+        # make sure chip does not flip between pwmchip0 and pwmchip1
+        # check ls -la /sys/class/pwm/pwmchip0
+        # if the path is /devices/platform/soc/ this is the wrong chip
+        # it should be /devices/platform/axi/ 
+        # try pwmchip1 if it flips
+        self.pi_1 = HardwarePWM(pwm_channel=0, hz=50, chip=0) # connect to pi gpio pin 12
+        self.pi_2 = HardwarePWM(pwm_channel=1, hz=50, chip=0) # connect to pi gpio pin 13
 
-        time.sleep(0.7)
-        
-        self.timer = self.create_timer(0.01, self.update_pwm)  # update pwm 100 times per second
+        self.pi_1.start(7.5)
+        self.pi_2.start(7.5)
         
         self.get_logger().info('Thruster control initialized.')
         # self.get_logger().info(f"{'Timestamp':<10} | {'Left ESC Pulsewidth':<17} | {'Right ESC Pulsewidth'}")
         self.get_logger().info("-" * 60)  # Print a separator line
 
 
-    def update_direction(self, msg):
-        if msg.data == "RADIO_TIMEOUT":
-            self.get_logger().warn('Radio timed out... Resetting thrusters to 0')
-            self.base_thrust = 0
-            self.delta_thrust = 0
-            return
-        
-        #Adjust thruster values
-        direction, value_str = msg.data.split(',')
-        
-        value = float(value_str) # [-1, 1]
-        
-        print(f"{direction}-{value}")
-
-        
-        if direction == "ABS_Y":
-            self.base_thrust = value
-        elif direction == "ABS_X":
-            self.delta_thrust = value
-
-
-    def update_pwm(self):
+    def update_pwm(self, msg):
+        split_mes = msg.data.split(",")
+        self.base_thrust = float(split_mes[0])
+        self.delta_thrust = float(split_mes[1])
         left_val = ThrusterControl.ESC_BASE_VAL + ThrusterControl.ESC_MAGNITUDE * (self.base_thrust + self.delta_thrust)
         right_val = ThrusterControl.ESC_BASE_VAL + ThrusterControl.ESC_MAGNITUDE * (self.base_thrust - self.delta_thrust)
 
@@ -71,9 +53,16 @@ class ThrusterControl(Node):
         left_val = np.clip(round(left_val), ThrusterControl.ESC_MIN_VAL, ThrusterControl.ESC_MAX_VAL)
         right_val = np.clip(round(right_val), ThrusterControl.ESC_MIN_VAL, ThrusterControl.ESC_MAX_VAL)
 
+        #print(f"{int(left_val)}-{int(right_val)}")
+
+        #Calculate duty cycle
+        left_val_dc = float(left_val)/20000 * 100 #20000 for 50 Hz
+        right_val_dc = float(right_val)/20000 * 100 
+
         # Set GPIO PWM values
-        self.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN1, left_val)
-        self.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN2, right_val)
+
+        self.pi_1.change_duty_cycle(left_val_dc)
+        self.pi_2.change_duty_cycle(right_val_dc)
 
         self.get_logger().debug(f"{self.base_thrust = } {self.delta_thrust = } {left_val = } {right_val = }")
 
@@ -84,8 +73,8 @@ def main(args=None):
     thruster_control = ThrusterControl()
     executor = MultiThreadedExecutor()
     rclpy.spin(thruster_control, executor=executor)
-    thruster_control.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN1, ThrusterControl.ESC_BASE_VAL)  # Reset to neutral on shutdown
-    thruster_control.pi.set_servo_pulsewidth(ThrusterControl.GPIO_ESC_PIN2, ThrusterControl.ESC_BASE_VAL)  # Reset to neutral on shutdown
+    thruster_control.pi_1.stop()  # Reset to neutral on shutdown
+    thruster_control.pi_2.stop()  # Reset to neutral on shutdown
     thruster_control.destroy_node()
     rclpy.shutdown()
 

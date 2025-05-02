@@ -63,9 +63,9 @@ class Qauntum(Node):
             1, 
             self.standby_timer_callback, 
             command_mutex_callback_group_)
-        # request polar image every 2.5 second
+        # request polar image every 2.5 second (2.65 to compensate for lag)
         self.polar_image_timer = self.create_timer(
-            2.65, 
+            2.55, 
             self.imager_callback, 
             reentrant_callback_group)
         # request data from radar asap
@@ -89,7 +89,12 @@ class Qauntum(Node):
             '/USV/Polar', 
             10, 
             callback_group=reentrant_callback_group)
-        
+
+        self.spoke_pub = self.create_publisher(
+            String, 
+            'radar_spoke', 
+            10)
+
         self.diagnostic_pub = self.create_publisher(
             String, 
             'diagnostic_status', 
@@ -102,6 +107,12 @@ class Qauntum(Node):
             self.radar_control_callback,
             10,
             callback_group=command_mutex_callback_group_)
+        
+        self.imu_subscription = self.create_subscription(
+            String,
+            'imu_handler_data',
+            self.process_imu_input,
+            10)
     
         self.alive_counter = 0
         self.num_spokes = DEFAULT_NUM_SPOKES
@@ -111,6 +122,7 @@ class Qauntum(Node):
         self.bridge = CvBridge()
         self.scanning = False
 
+        self.imu_input = ''
 
     def locate_quantum(self, multicast_group='224.0.0.1', multicast_port=5800, quantum_model_id=40) -> LocationInfo:
         # Create UDP socket
@@ -311,6 +323,8 @@ class Qauntum(Node):
         rmr = RMReport(*bl)
         self.get_logger().debug(f'{rmr}')
 
+    def process_imu_input(self, msg):
+        self.imu_input = msg.data
 
     def process_quantum_scan_data(self, data: bytes):
         
@@ -322,9 +336,13 @@ class Qauntum(Node):
         qdata = QuantumScan.parse_data(data[20:])
         qs = QuantumScan(*qheader, qdata)
         
-        #f = open("/home/ws/test/slam_radar_test/radar_data.txt", "a") 
-        #f.write(f'[{time.time()}]\tQ_Header<{qheader}>\tQ_Data<{qdata}>\n')
-        
+        f = open("/home/ws/test/slam_radar_test/radar_data.txt", "a") 
+        f.write(f'[{time.time()}]\tQ_Header<{qheader}>\tQ_Data<{qdata}>\t{self.imu_input}\n')
+        spoke_string = f'[{time.time()}]\tQ_Header<{qheader}>\tQ_Data<{qdata}>\t{self.imu_input}\n'
+        msg = String()
+        msg.data = spoke_string
+        self.spoke_pub.publish(msg)
+
         self.get_logger().debug(f'{qs}')
         
         if self.spokes is None: return
@@ -365,8 +383,8 @@ class Qauntum(Node):
         print(f'imager_callback spokes_updated before: {self.spokes_updated}')
         #polar_image = np.copy(self.spokes/MAX_INTENSITY * 255).astype(np.uint8)
         polar_image = np.copy(self.spokes).astype(np.uint8)
-        cv2.imwrite('test/polar_image.jpg', polar_image)
-        #cv2.imwrite(f'test/slam_radar_test/polar/polar_{time.time()}.jpg', polar_image)
+        #cv2.imwrite('test/polar_image.jpg', polar_image)
+        cv2.imwrite(f'test/slam_radar_test/polar/polar_{time.time()}.jpg', polar_image)
 
         self.polar_image_publisher.publish(self.bridge.cv2_to_imgmsg(polar_image, encoding="passthrough"))
         

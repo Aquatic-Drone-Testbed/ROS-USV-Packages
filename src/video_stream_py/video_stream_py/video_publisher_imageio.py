@@ -13,12 +13,13 @@ class VideoPublisher(Node):
     def __init__(self):
         super().__init__('video_publisher_node')
         
-        # video_path = 0  # Depth
-        video_path = 4  # USB Camera Input
-        self.video_reader = iio.imiter(f"<video{video_path}>")
+        video_path = 0  # USB Realsense Depth / Normal Cam
+        # video_path = 4  # USB Realsense Color
+
+        self.video_reader = iio.imiter(f"<video{video_path}>", size=(640, 480))
         self.frame_generator = iter(self.video_reader)
 
-        fps = 10
+        fps = 12
         # fps = self.video_capture.get(cv2.CAP_PROP_FPS) or 30 # Default to 30 FPS if not available
         self.get_logger().info(f'Input Video: {fps}FPS')
 
@@ -58,12 +59,12 @@ class VideoPublisher(Node):
             return
 
         self.get_logger().debug(f'Sending frame: Width = {frame.shape[1]}, Height = {frame.shape[0]}')
-        # print(f'Sending frame: Width = {frame.shape[1]}, Height = {frame.shape[0]}')
+        #print(f'PRE Sending frame: Width = {frame.shape[1]}, Height = {frame.shape[0]}')
 
         image_message = self.bridge.cv2_to_imgmsg(np.asarray(frame), encoding='rgb8')
         
-        # resized_image = cv2.resize(np.asarray(frame), (640, 480))
-        # image_message = self.bridge.cv2_to_imgmsg(np.asarray(resized_image), encoding='rgb8')
+        #resized_image = cv2.resize(np.asarray(frame), (640, 480))
+        #image_message = self.bridge.cv2_to_imgmsg(np.asarray(resized_image), encoding='rgb8')
        
         self.get_logger().debug(f'Sending frame: Width = {frame.shape[1]}, Height = {frame.shape[0]}')
         # print(f'Sending frame: Width = {frame.shape[1]}, Height = {frame.shape[0]}')

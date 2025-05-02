@@ -19,13 +19,14 @@ from cv_bridge import CvBridge
 from PIL import Image as PilImage
 
 class RadioServer(Node):
-    RADIO_TIMEOUT_SECONDS = 5
+    RADIO_TIMEOUT_SECONDS = 1
     USV_SERVER_PORT = 39000
     GPS_DATA_PORT = 39001
     VIDEO_STREAM_PORT = 39002
     RADAR_STREAM_PORT = 39003
+    LIDAR_STREAM_PORT = 39006
     DIAGNOSTIC_PORT = 39004
-    SLAM_PORT = 39005
+    SLAM_PORT = 39005 #Using this to send radar spoke data
     REQUEST_CONNECTION_STR = 'Ping'
     ACKNOWLEDGE_CONNECTION_STR = 'Pong'
         
@@ -90,10 +91,22 @@ class RadioServer(Node):
             video_stream_qos,
             callback_group=reentrant_callback_group)
         self.create_subscription(
+            Image, 
+            'lidar_image', 
+            self.lidar_stream_callback, 
+            video_stream_qos,
+            callback_group=reentrant_callback_group)
+        self.create_subscription(
             NavSatFix, 
             'gps_data', 
             self.gps_data_callback, 
             gps_data_qos,
+            callback_group=reentrant_callback_group)
+        self.create_subscription(
+            String, 
+            'radar_spoke', 
+            self.radar_spoke_callback, 
+            10,
             callback_group=reentrant_callback_group)
         self.create_subscription(
             String, 
@@ -186,10 +199,23 @@ class RadioServer(Node):
         self.send_to_ctrl_station(compressed_img, RadioServer.RADAR_STREAM_PORT)
 
 
+    def lidar_stream_callback(self, msg: Image):
+        cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+        pil_image = PilImage.fromarray(cv_image)
+        buffer = io.BytesIO()
+        pil_image.save(buffer, format='JPEG', quality=80)
+        compressed_img = buffer.getvalue()
+        self.send_to_ctrl_station(compressed_img, RadioServer.LIDAR_STREAM_PORT)
+
+
     def gps_data_callback(self, msg: NavSatFix):
         gps_data = f"Latitude: {msg.latitude}, Longitude: {msg.longitude}, Altitude: {msg.altitude}".encode()
         self.send_to_ctrl_station(gps_data, RadioServer.GPS_DATA_PORT)
 
+    def radar_spoke_callback(self, msg: String):
+        radar_spoke_data = msg.data.encode()
+        self.get_logger().debug(f'Sent {msg} to station via port {RadioServer.SLAM_PORT}')
+        self.send_to_ctrl_station(radar_spoke_data, RadioServer.SLAM_PORT)
 
     def diagnostics_callback(self, msg: String):
         diagnostic_data = msg.data.encode()
