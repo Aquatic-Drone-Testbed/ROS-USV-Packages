@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 #import time
 import math
 #import numpy as np
@@ -14,7 +14,15 @@ class NavigationModule(Node):
         super().__init__('nav_module')
 
         reentrant_callback_group = ReentrantCallbackGroup()
+        command_mutex_callback_group = MutuallyExclusiveCallbackGroup()
         
+        # timers
+        # run every 2 seconds to clear recent detect flag
+        self.standby_timer = self.create_timer(
+            2, 
+            self.detect_timer_callback,
+            reentrant_callback_group)
+
         self.subscription = self.create_subscription(
             String, 
             'thruster_control', 
@@ -26,6 +34,13 @@ class NavigationModule(Node):
             "object_detect", 
             self.block_direction,
             10)
+        
+        self.navmod_control_subscription = self.create_subscription(
+            String,
+            'navmod_control',
+            self.navmod_control_callback,
+            10,
+            callback_group=command_mutex_callback_group)
         
         self.thrust_publisher = self.create_publisher(
             String,
@@ -46,6 +61,7 @@ class NavigationModule(Node):
         self.delta_thrust = 0
         self.detect_flag = 0
         self.recent_flag = 0
+        self.navmod_enabled = True
 
     def block_direction(self, msg):
         if msg.data == "Yes":
@@ -109,20 +125,21 @@ class NavigationModule(Node):
 
         if direction == "ABS_Y":
             #NEW CODE
-            if self.detect_flag == 1 and value > 0:
+            if self.detect_flag == 1 and value > 0 and self.navmod_enabled:
                 self.base_thrust = 0
                 self.recent_flag = 1
                 #if self.delta_thrust == 0:
-                self.delta_thrust = 0.12
+                self.delta_thrust = 0.5
             else:
                 self.base_thrust = value
         elif direction == "ABS_X":
             self.delta_thrust = value
         
         if self.detect_flag == 0 and self.recent_flag == 1:
-            self.base_thrust = 0.12
+            self.base_thrust = 0.5
             self.delta_thrust = 0
-        ### Angle Code START
+
+        ### Angle Display Code START
 
         if self.base_thrust == 0 and self.delta_thrust == 0:
             dir_angle = -1
@@ -140,14 +157,25 @@ class NavigationModule(Node):
         mesv.data = str(int(dir_angle))
         self.thrust_angle_publisher.publish(mesv)
 
-        ### Angle Code END
+        ### Angle Display Code END
 
         mes = String()
         mes.data = str(self.base_thrust) + "," + str(self.delta_thrust)
         #print(mes.data)
         self.thrust_publisher.publish(mes)
         if self.detect_flag == 0 and self.recent_flag == 1:
-            time.sleep(2)
+            #time.sleep(2)
+            self.recent_flag = 0
+
+    def navmod_control_callback(self, msg):
+        match msg.data:
+            case 'toggle_navmod':
+                self.navmod_enabled = not self.navmod_enabled
+            case _:
+                self.get_logger().error(f'unknown navmod control: {msg.data}')
+
+    def detect_timer_callback(self):
+        if self.detect_flag == 0 and self.recent_flag == 1:
             self.recent_flag = 0
 
 def main(args=None):

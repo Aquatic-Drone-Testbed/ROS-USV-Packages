@@ -26,7 +26,8 @@ class RadioServer(Node):
     RADAR_STREAM_PORT = 39003
     LIDAR_STREAM_PORT = 39006
     DIAGNOSTIC_PORT = 39004
-    SLAM_PORT = 39005 #Using this to send radar spoke data
+    SLAM_PORT = 39005 #Using this to send radar scan string data
+    SPOKE_PORT = 39007
     REQUEST_CONNECTION_STR = 'Ping'
     ACKNOWLEDGE_CONNECTION_STR = 'Pong'
         
@@ -76,6 +77,11 @@ class RadioServer(Node):
             "radar_control", 
             10,
             callback_group=reentrant_callback_group)
+        self.navmod_control_publisher = self.create_publisher(
+            String, 
+            "navmod_control", 
+            10,
+            callback_group=reentrant_callback_group)
         
         # subscribers
         self.create_subscription(
@@ -106,6 +112,12 @@ class RadioServer(Node):
             String, 
             'radar_spoke', 
             self.radar_spoke_callback, 
+            10,
+            callback_group=reentrant_callback_group)
+        self.create_subscription(
+            String, 
+            'radar_scan_str', 
+            self.radar_scan_callback, 
             10,
             callback_group=reentrant_callback_group)
         self.create_subscription(
@@ -176,6 +188,10 @@ class RadioServer(Node):
                 elif data_value == "zoom_out":
                     msg.data = "zoom_out"
                 self.radar_control_publisher.publish(msg)
+            case "navmod":
+                if data_value == "toggle_navmod":
+                    msg.data = "toggle_navmod"
+                self.navmod_control_publisher.publish(msg)
             case _:
                 self.get_logger().error(f"Unknown data type: {data_type}")
 
@@ -214,8 +230,13 @@ class RadioServer(Node):
 
     def radar_spoke_callback(self, msg: String):
         radar_spoke_data = msg.data.encode()
+        self.get_logger().debug(f'Sent {msg} to station via port {RadioServer.SPOKE_PORT}')
+        self.send_to_ctrl_station(radar_spoke_data, RadioServer.SPOKE_PORT)
+
+    def radar_scan_callback(self, msg: String):
+        radar_scan_data = msg.data.encode()
         self.get_logger().debug(f'Sent {msg} to station via port {RadioServer.SLAM_PORT}')
-        self.send_to_ctrl_station(radar_spoke_data, RadioServer.SLAM_PORT)
+        self.send_to_ctrl_station(radar_scan_data, RadioServer.SLAM_PORT)
 
     def diagnostics_callback(self, msg: String):
         diagnostic_data = msg.data.encode()

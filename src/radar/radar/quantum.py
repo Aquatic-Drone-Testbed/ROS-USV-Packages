@@ -68,6 +68,13 @@ class Qauntum(Node):
             2.55, 
             self.imager_callback, 
             reentrant_callback_group)
+        
+        # request full scan in string form every 2.5 seconds
+        self.scan_string_timer = self.create_timer(
+            2.55, 
+            self.scan_string_callback, 
+            reentrant_callback_group)
+
         # request data from radar asap
         self.data_timer = self.create_timer(
             0, 
@@ -93,7 +100,14 @@ class Qauntum(Node):
         self.spoke_pub = self.create_publisher(
             String, 
             'radar_spoke', 
-            10)
+            10,
+            callback_group=reentrant_callback_group)
+        
+        self.scan_string_pub = self.create_publisher(
+            String, 
+            'radar_scan_str', 
+            10,
+            callback_group=reentrant_callback_group)
 
         self.diagnostic_pub = self.create_publisher(
             String, 
@@ -123,6 +137,8 @@ class Qauntum(Node):
         self.scanning = False
 
         self.imu_input = ''
+
+        self.scan_str = ''
 
     def locate_quantum(self, multicast_group='224.0.0.1', multicast_port=5800, quantum_model_id=40) -> LocationInfo:
         # Create UDP socket
@@ -339,9 +355,12 @@ class Qauntum(Node):
         f = open("/home/ws/test/slam_radar_test/radar_data.txt", "a") 
         f.write(f'[{time.time()}]\tQ_Header<{qheader}>\tQ_Data<{qdata}>\t{self.imu_input}\n')
         spoke_string = f'[{time.time()}]\tQ_Header<{qheader}>\tQ_Data<{qdata}>\t{self.imu_input}\n'
-        msg = String()
-        msg.data = spoke_string
-        self.spoke_pub.publish(msg)
+        self.scan_str += spoke_string
+
+        ##Uncomment below to use spoke string publisher##
+        #msg = String()
+        #msg.data = spoke_string
+        #self.spoke_pub.publish(msg)
 
         self.get_logger().debug(f'{qs}')
         
@@ -380,7 +399,7 @@ class Qauntum(Node):
     def imager_callback(self):
         #if self.spokes_updated < 250:
         #    return
-        print(f'imager_callback spokes_updated before: {self.spokes_updated}')
+        #print(f'imager_callback spokes_updated before: {self.spokes_updated}')
         #polar_image = np.copy(self.spokes/MAX_INTENSITY * 255).astype(np.uint8)
         polar_image = np.copy(self.spokes).astype(np.uint8)
         #cv2.imwrite('test/polar_image.jpg', polar_image)
@@ -399,6 +418,11 @@ class Qauntum(Node):
         #self.spokes = np.full((self.num_spokes, 96), 255)
         self.spokes_updated = 0
 
+    def scan_string_callback(self):
+        msg = String()
+        msg.data = self.scan_str
+        self.scan_string_pub.publish(msg)
+        self.scan_str = ''
 
     def radar_control_callback(self, msg):
         match msg.data:
