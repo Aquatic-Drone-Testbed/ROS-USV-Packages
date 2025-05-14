@@ -7,7 +7,7 @@ Environment setup is based on [ROS2 Community Guide](https://docs.ros.org/en/hum
 
 Due to hardware changes on the Pi5, you may need to update the Pi5 with custom firmware to enable hardware PWM on the GPIO pins. The instructions to do so are here: [https://gist.github.com/Gadgetoid/b92ad3db06ff8c264eef2abf0e09d569] (Note: The "safety rail" script mentioned was not used in any of our implementations and is untested with our setup)
 
-Once this is done, you can use the python package ```rpi-hardware-pwm```. There is also a permissions setting file ```pwm-permissions.sh``` that needs to be executed the first time on each boot for the GPIO pins to work. Generally, you will not need to mess with this as it's handled by other launch scripts but you may need to include it in any custom launch scripts you write.
+Once this is done, you can use the python package ```rpi-hardware-pwm```. There is also a permissions setting file ```pwm-permissions.sh``` and python script ```pwm-init.py``` that need to be executed the first time on each boot for the GPIO pins to work. Generally, you will not need to mess with this as it's handled by other launch scripts but you may need to include these in any custom launch scripts you write.
 
 You may also need to add a ```gpio``` group in the docker itself and add the user to this group. Additionally, outside the docker on the host, you may need to add the ```docker``` user to the ```sys``` group. Only do this if you are still having issues.
 
