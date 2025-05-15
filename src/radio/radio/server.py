@@ -231,12 +231,15 @@ class RadioServer(Node):
     def radar_spoke_callback(self, msg: String):
         radar_spoke_data = msg.data.encode()
         self.get_logger().debug(f'Sent {msg} to station via port {RadioServer.SPOKE_PORT}')
+        #print("SENT SPOKE")
         self.send_to_ctrl_station(radar_spoke_data, RadioServer.SPOKE_PORT)
 
     def radar_scan_callback(self, msg: String):
-        radar_scan_data = msg.data.encode()
-        self.get_logger().debug(f'Sent {msg} to station via port {RadioServer.SLAM_PORT}')
-        self.send_to_ctrl_station(radar_scan_data, RadioServer.SLAM_PORT)
+        pass
+        #uncomment to send full radar scans (note: currently packets too large)
+        #radar_scan_data = msg.data.encode()
+        #self.get_logger().debug(f'Sent {msg} to station via port {RadioServer.SLAM_PORT}')
+        #self.send_to_ctrl_station(radar_scan_data, RadioServer.SLAM_PORT)
 
     def diagnostics_callback(self, msg: String):
         diagnostic_data = msg.data.encode()

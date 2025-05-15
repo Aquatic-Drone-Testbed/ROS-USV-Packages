@@ -171,6 +171,7 @@ class NavigationModule(Node):
         match msg.data:
             case 'toggle_navmod':
                 self.navmod_enabled = not self.navmod_enabled
+                print(f'navmod_enabled is: {self.navmod_enabled}')
             case _:
                 self.get_logger().error(f'unknown navmod control: {msg.data}')
 

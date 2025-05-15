@@ -358,9 +358,9 @@ class Qauntum(Node):
         self.scan_str += spoke_string
 
         ##Uncomment below to use spoke string publisher##
-        #msg = String()
-        #msg.data = spoke_string
-        #self.spoke_pub.publish(msg)
+        msg = String()
+        msg.data = spoke_string
+        self.spoke_pub.publish(msg)
 
         self.get_logger().debug(f'{qs}')
         
@@ -419,10 +419,13 @@ class Qauntum(Node):
         self.spokes_updated = 0
 
     def scan_string_callback(self):
-        msg = String()
-        msg.data = self.scan_str
-        self.scan_string_pub.publish(msg)
-        self.scan_str = ''
+        # uncomment below to enable whole scan string publisher
+        pass
+        #msg = String()
+        #msg.data = self.scan_str
+
+        #self.scan_string_pub.publish(msg)
+        #self.scan_str = ''
 
     def radar_control_callback(self, msg):
         match msg.data:
