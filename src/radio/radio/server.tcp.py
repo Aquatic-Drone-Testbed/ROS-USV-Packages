@@ -1,3 +1,4 @@
+#TCP RADAR SPOKE VERSION
 import socket
 import io
 
@@ -19,6 +20,7 @@ from cv_bridge import CvBridge
 from PIL import Image as PilImage
 
 import zlib
+import struct
 import re
 
 class RadioServer(Node):
@@ -42,8 +44,11 @@ class RadioServer(Node):
         self.port = self.get_parameter('port').get_parameter_value().integer_value
         
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind(('', self.port))
         self.sock.settimeout(RadioServer.RADIO_TIMEOUT_SECONDS)
+        
+        self.sock_tcp = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 
         self.get_logger().info(f"Radio server listening on UDP port {self.port}...")
         
@@ -162,7 +167,21 @@ class RadioServer(Node):
     def process_control_station_data(self, data):
         data_str = data.decode()
         if data_str == RadioServer.REQUEST_CONNECTION_STR:
+            connected = False
             self.get_logger().info(f'Received {RadioServer.REQUEST_CONNECTION_STR} from control station ({self.control_station_ip}:{self.control_station_port})')
+            self.get_logger().info(f'Connecting TCP...')
+            while not connected:
+                try:
+                    self.sock_tcp.connect((self.control_station_ip,RadioServer.SPOKE_PORT))
+                    self.get_logger().info(f'TCP Connected!...')
+                    connected = True
+                except ConnectionError:
+                    self.get_logger().info(f'Retrying TCP Connection to {self.control_station_ip}...')
+                except OSError:
+                    self.sock_tcp.close()
+                    self.sock_tcp = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+                except KeyboardInterrupt:
+                    break
             self.get_logger().info(f'Sending {RadioServer.ACKNOWLEDGE_CONNECTION_STR} back to control station')
             self.send_to_ctrl_station(RadioServer.ACKNOWLEDGE_CONNECTION_STR.encode(), self.control_station_port)
             return
@@ -239,15 +258,20 @@ class RadioServer(Node):
         if match: 
             q_header = match.group(1)
             elements = [x for x in q_header.split(',')]
-            if int(elements[7]) != self.last_spoke+1 and int(elements[7]) != 0 and int(elements[7]) != self.last_spoke:
+            if int(elements[7]) != self.last_spoke+1 and int(elements[7]) != 0:
                 print(f'Dropped Spoke! Last: {self.last_spoke} Current: {int(elements[7])}')
             self.last_spoke = int(elements[7])
         
-        #radar_spoke_data = zlib.compress(msg.data.encode())
-        radar_spoke_data = msg.data.encode()
+        #radar_spoke_data = zlib.compress(msg.data.encode()) #FOR COMPRESSION
+        radar_spoke_data = msg.data.encode() #FOR NO COMPRESSION
+        length = len(radar_spoke_data) #for TCP
+        radar_spoke_data = struct.pack('!I', length) + radar_spoke_data
         self.get_logger().debug(f'Sent {msg} to station via port {RadioServer.SPOKE_PORT}')
         #print("SENT SPOKE")
-        self.send_to_ctrl_station(radar_spoke_data, RadioServer.SPOKE_PORT)
+        
+        #self.send_to_ctrl_station(radar_spoke_data, RadioServer.SPOKE_PORT) #SEND VIA UDP
+
+        self.send_to_ctrl_station_tcp(radar_spoke_data) #SEND VIA TCP (MUST REMOVE TCP CONNECT CODE IF COMMENTED OUT TO USE UDP)
 
     def radar_scan_callback(self, msg: String):
         pass
@@ -269,6 +293,17 @@ class RadioServer(Node):
         
         self.sock.sendto(data, (self.control_station_ip, port))
         self.get_logger().debug(f'Sent {len(data)} bytes to {self.control_station_ip}:{self.control_station_port}')
+
+    def send_to_ctrl_station_tcp(self, data: bytes):
+        if self.control_station_ip is None:
+            self.get_logger().warn(f'[TCP] Control station not connected!')
+            return
+        
+        try:
+            self.sock_tcp.send(data)
+            self.get_logger().debug(f'[TCP] Sent {len(data)} bytes to {self.control_station_ip}:{RadioServer.SPOKE_PORT}')
+        except OSError:
+            print("TCP Send Failed")
 
 
 def main(args=None):

@@ -90,32 +90,32 @@ class NavigationModule(Node):
         
         #print(f"{direction}-{value}")
 
-        nvalue = 0
+        # #Taper control
 
-        #Taper control
-        if abs(value) <= 0.12 and abs(value) > 0.001:
-            if value < 0:
-                nvalue = -0.12
-            else:
-                nvalue = 0.12
+        # nvalue = 0
+        # if abs(value) <= 0.12 and abs(value) > 0.001:
+        #     if value < 0:
+        #         nvalue = -0.12
+        #     else:
+        #         nvalue = 0.12
 
-        if abs(value) > 0.12:
-            if value < 0:
-                nvalue = -(abs(value)*0.45 + 0.07)
-            else:
-                nvalue = value*0.3+0.08
+        # if abs(value) > 0.12:
+        #     if value < 0:
+        #         nvalue = -(abs(value)*0.45 + 0.07)
+        #     else:
+        #         nvalue = value*0.3+0.08
 
-        #Turbo
-        if abs(value) == 1.0:
-            if value < 0:
-                nvalue = -1.0
-            else:
-                nvalue = 1.0
+        # #Turbo
+        # if abs(value) == 1.0:
+        #     if value < 0:
+        #         nvalue = -1.0
+        #     else:
+        #         nvalue = 1.0
 
-        value = nvalue
+        # value = nvalue
 
-        #Speed governor
-        #if abs(value) > 0.5:
+        # # Speed governor
+        # if abs(value) > 0.5:
         #    if value < 0:
         #        value = -0.5
         #    else:

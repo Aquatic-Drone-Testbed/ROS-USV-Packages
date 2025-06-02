@@ -19,13 +19,13 @@ class ImuHandler(Node):
         self.subscription_imu = self.create_subscription(
             Imu, 
             '/bno055/imu', 
-            self.process_imu,  #receives messages/ processes controller input``
+            self.process_imu,  
             10)
 
         self.subscription_mag  = self.create_subscription(
             MagneticField, 
             '/bno055/mag', 
-            self.receive_mag,  #receives messages/ processes controller input``
+            self.receive_mag,  
             10)
         
         self.imu_publisher = self.create_publisher(

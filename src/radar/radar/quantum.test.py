@@ -64,10 +64,10 @@ class Qauntum(Node):
             self.standby_timer_callback, 
             command_mutex_callback_group_)
         # request polar image every 2.5 second (2.65 to compensate for lag)
-        # self.polar_image_timer = self.create_timer(
-        #     2.55, 
-        #     self.imager_callback, 
-        #     reentrant_callback_group)
+        self.polar_image_timer = self.create_timer(
+            2.55, 
+            self.imager_callback, 
+            reentrant_callback_group)
         
         # request full scan in string form every 2.5 seconds
         # self.scan_string_timer = self.create_timer(
@@ -167,20 +167,26 @@ class Qauntum(Node):
         locator_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         self.get_logger().info(f'Initialized locator socket')
         
-        # loop until Raymarine Quantum is found
+        # loop until Raymarine Quantum is found #NOTE: IP IS PROBABLY 10.42.0.253, PORT IS PROBABLY 2575
         self.get_logger().info(f'Locating radar...')
-        while True:
-            data, senderaddr = locator_socket.recvfrom(1024)
-            self.get_logger().debug(f'received {len(data)} bytes from {senderaddr[0]}:{senderaddr[1]}')
-            if len(data) != 36: continue # ignore any packets not 36 bytes
+        # while True:
+        #     data, senderaddr = locator_socket.recvfrom(1024)
+        #     self.get_logger().debug(f'received {len(data)} bytes from {senderaddr[0]}:{senderaddr[1]}')
+        #     if len(data) != 36: continue # ignore any packets not 36 bytes
             
-            quantum_location = LocationInfo(*LocationInfo.parse(data))
-            self.get_logger().debug(f'{quantum_location=}')
-            if quantum_location.model_id != quantum_model_id: continue
+        #     quantum_location = LocationInfo(*LocationInfo.parse(data))
+        #     self.get_logger().debug(f'{quantum_location=}')
+        #     print(f'{quantum_location=}')
+        #     if quantum_location.model_id != quantum_model_id: continue
             
-            self.get_logger().info(f'Found radar at {quantum_location.radar_ip}')
-            break
+        #     self.get_logger().info(f'Found radar at {quantum_location.radar_ip}')
+
+        #     print(quantum_location.radar_port)
+        #     break
         
+        quantum_location = LocationInfo(field1=0, field2=3414199186, model_id=40, field3=0, field4=0, field5=6553603, field6=1050630, data_ip='232.1.179.1', data_port=2574, radar_ip='10.42.0.253', radar_port=2575)
+        self.get_logger().info(f'Found radar at {quantum_location.radar_ip}')
+
         self.get_logger().info(f'Closing locator socket')
         locator_socket.close()
         return quantum_location
@@ -203,7 +209,7 @@ class Qauntum(Node):
     def radar_stay_alive(self) -> None:
         self.transmit_command(control_message.STAY_ALIVE_1SEC)
         if (self.alive_counter%5 == 0):
-            self.transmit_command(control_message.STAY_ALIVE_5SEC)
+           self.transmit_command(control_message.STAY_ALIVE_5SEC)
         self.get_logger().debug(f'Sent stay alive command')
 
 
@@ -269,6 +275,7 @@ class Qauntum(Node):
         
         self.last_frame_id = struct.unpack('<I', data[:4])[0] # read first 4 bytes
         self.get_logger().debug(f'Received {len(data)} bytes (frame_id=0x{self.last_frame_id:X})')
+        #print(f'Received {len(data)} bytes (frame_id=0x{self.last_frame_id:X})')
         self.get_logger().debug(f'{data}')
         
         match self.last_frame_id:
@@ -365,9 +372,9 @@ class Qauntum(Node):
         self.scan_str += spoke_string
 
         ##Uncomment below to use spoke string publisher##
-        msg = String()
-        msg.data = spoke_string
-        self.spoke_pub.publish(msg)
+        # msg = String()
+        # msg.data = spoke_string
+        # self.spoke_pub.publish(msg)
 
         self.get_logger().debug(f'{qs}')
         
@@ -420,16 +427,16 @@ class Qauntum(Node):
         #    return
         #print(f'imager_callback spokes_updated before: {self.spokes_updated}')
         #polar_image = np.copy(self.spokes/MAX_INTENSITY * 255).astype(np.uint8)
-        polar_image = np.copy(self.spokes).astype(np.uint8)
+        ### polar_image = np.copy(self.spokes).astype(np.uint8) #
         #cv2.imwrite('test/polar_image.jpg', polar_image)
         #cv2.imwrite(f'test/slam_radar_test/polar/polar_{time.time()}.jpg', polar_image)
 
-        self.polar_image_publisher.publish(self.bridge.cv2_to_imgmsg(polar_image, encoding="passthrough"))
+        ### self.polar_image_publisher.publish(self.bridge.cv2_to_imgmsg(polar_image, encoding="passthrough")) #
         
-        I, D, P = RadarFilter.generate_map(r=polar_image, k=None, p=None, K=None, area_threshold=50, gamma=None)
+        ### I, D, P = RadarFilter.generate_map(r=polar_image, k=None, p=None, K=None, area_threshold=50, gamma=None) #
         
-        ctrl_station_img = I
-        self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(ctrl_station_img, encoding="passthrough"))
+        ###ctrl_station_img = I #
+        ###self.image_publisher_.publish(self.bridge.cv2_to_imgmsg(ctrl_station_img, encoding="passthrough")) #
         
         self.get_logger().info(f'Published images (updated {self.spokes_updated} spokes at zoom level {self.range_index})')
         

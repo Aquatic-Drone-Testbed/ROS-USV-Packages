@@ -24,7 +24,7 @@ You may also need to add a ```gpio``` group in the docker itself and add the use
 1. run `git submodule update --init --recursive` to clone all the submodules
 2. run `colcon build`
 
-## Instruction to Build at frist time
+## Instruction to Build at first time
 
 1. Run the build script:
     ```bash

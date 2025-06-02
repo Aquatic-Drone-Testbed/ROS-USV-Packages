@@ -8,7 +8,7 @@ trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 # Redirect all ROS logging output to STDOUT
 export RCUTILS_LOGGING_USE_STDOUT=1
 
-./scripts/run-quantum.sh &
+# ./scripts/run-quantum.sh &
 ./scripts/run-radio.sh &
 ./scripts/run-thruster.sh &
 ./scripts/run-nav-mod.sh &
@@ -23,7 +23,7 @@ export RCUTILS_LOGGING_USE_STDOUT=1
 
 #./scripts/run-video.sh & 
 #./scripts/run-ldlidar.sh &
-./scripts/run-lidar-sub.sh &
+#./scripts/run-lidar-sub.sh &
 
 # Keep this script alive forever
 

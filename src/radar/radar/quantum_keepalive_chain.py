@@ -59,10 +59,10 @@ class Qauntum(Node):
         
         # timers
         # keep radar alive every 1 second
-        self.standby_timer = self.create_timer(
-            1, 
-            self.standby_timer_callback, 
-            command_mutex_callback_group_)
+        # self.standby_timer = self.create_timer(
+        #     1, 
+        #     self.standby_timer_callback, 
+        #     command_mutex_callback_group_)
         # request polar image every 2.5 second (2.65 to compensate for lag)
         # self.polar_image_timer = self.create_timer(
         #     2.55, 
@@ -81,9 +81,9 @@ class Qauntum(Node):
             self.radar_data_callback, 
             receiver_mutex_callback_group)
         # send radar heartbeat every 3 second
-        self.diagnostic_timer = self.create_timer(
-            3.0,
-            self.publish_radar_heartbeat)
+        # self.diagnostic_timer = self.create_timer(
+        #     3.0,
+        #     self.publish_radar_heartbeat)
         
         # publisher
         self.image_publisher_ = self.create_publisher(
@@ -115,12 +115,12 @@ class Qauntum(Node):
             10)
         
         # subscription
-        self.radar_control_subscription = self.create_subscription(
-            String,
-            'radar_control',
-            self.radar_control_callback,
-            10,
-            callback_group=command_mutex_callback_group_)
+        # self.radar_control_subscription = self.create_subscription(
+        #     String,
+        #     'radar_control',
+        #     self.radar_control_callback,
+        #     10,
+        #     callback_group=command_mutex_callback_group_)
         
         self.imu_subscription = self.create_subscription(
             String,
@@ -167,20 +167,27 @@ class Qauntum(Node):
         locator_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         self.get_logger().info(f'Initialized locator socket')
         
-        # loop until Raymarine Quantum is found
+        # loop until Raymarine Quantum is found 
         self.get_logger().info(f'Locating radar...')
-        while True:
-            data, senderaddr = locator_socket.recvfrom(1024)
-            self.get_logger().debug(f'received {len(data)} bytes from {senderaddr[0]}:{senderaddr[1]}')
-            if len(data) != 36: continue # ignore any packets not 36 bytes
+        # while True:
+        #     data, senderaddr = locator_socket.recvfrom(1024)
+        #     self.get_logger().debug(f'received {len(data)} bytes from {senderaddr[0]}:{senderaddr[1]}')
+        #     if len(data) != 36: continue # ignore any packets not 36 bytes
             
-            quantum_location = LocationInfo(*LocationInfo.parse(data))
-            self.get_logger().debug(f'{quantum_location=}')
-            if quantum_location.model_id != quantum_model_id: continue
+        #     quantum_location = LocationInfo(*LocationInfo.parse(data))
+        #     self.get_logger().debug(f'{quantum_location=}')
+        #     if quantum_location.model_id != quantum_model_id: continue
             
-            self.get_logger().info(f'Found radar at {quantum_location.radar_ip}')
-            break
+        #     self.get_logger().info(f'Found radar at {quantum_location.radar_ip}')
+        #     break
         
+        ###NOTE: IP IS PROBABLY 10.42.0.253, PORT IS PROBABLY 2575
+        # This information is probably static given current setup, if changes happen, use the while loop above to recollect the correct location info
+        # Also, on first launch, having this info will still not allow commands to be issued until the Raymarine radar sends the location info packet anyway
+        # This is mostly to help with quickly reconnecting when rebooting the node.
+        quantum_location = LocationInfo(field1=0, field2=3414199186, model_id=40, field3=0, field4=0, field5=6553603, field6=1050630, data_ip='232.1.179.1', data_port=2574, radar_ip='10.42.0.253', radar_port=2575)
+        self.get_logger().info(f'Found radar at {quantum_location.radar_ip}')
+
         self.get_logger().info(f'Closing locator socket')
         locator_socket.close()
         return quantum_location
@@ -195,9 +202,9 @@ class Qauntum(Node):
         return command_socket
 
 
-    def standby_timer_callback(self):
-        self.radar_stay_alive()
-        self.alive_counter = (self.alive_counter + 1)%5
+    # def standby_timer_callback(self):
+    #     self.radar_stay_alive()
+    #     self.alive_counter = (self.alive_counter + 1)%5
 
 
     def radar_stay_alive(self) -> None:
@@ -447,28 +454,30 @@ class Qauntum(Node):
         #self.scan_str = ''
 
     def radar_control_callback(self, msg):
-        match msg.data:
-            case 'start_scan':
-                self.start_scan()
-            case 'stop_scan':
-                self.stop_scan()
-            case 'toggle_scan':
-                self.scanning = not self.scanning
-                if self.scanning: self.start_scan()
-                else: self.stop_scan()
-            case 'zoom_in':
-                self.zoom_in()
-            case 'zoom_out':
-                self.zoom_out()
-            case _:
-                self.get_logger().error(f'unknown radar control: {msg.data}')
+        pass
+        # match msg.data:
+        #     case 'start_scan':
+        #         self.start_scan()
+        #     case 'stop_scan':
+        #         self.stop_scan()
+        #     case 'toggle_scan':
+        #         self.scanning = not self.scanning
+        #         if self.scanning: self.start_scan()
+        #         else: self.stop_scan()
+        #     case 'zoom_in':
+        #         self.zoom_in()
+        #     case 'zoom_out':
+        #         self.zoom_out()
+        #     case _:
+        #         self.get_logger().error(f'unknown radar control: {msg.data}')
 
 
     def publish_radar_heartbeat(self):
-        if self.scanning:
-            self.diagnostic_pub.publish(String(data="Radar: Scanning"))
-        else:
-            self.diagnostic_pub.publish(String(data="Radar: Standby"))
+        pass
+        # if self.scanning:
+        #     self.diagnostic_pub.publish(String(data="Radar: Scanning"))
+        # else:
+        #     self.diagnostic_pub.publish(String(data="Radar: Standby"))
 
 
 def main(args=None):

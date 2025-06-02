@@ -167,20 +167,27 @@ class Qauntum(Node):
         locator_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         self.get_logger().info(f'Initialized locator socket')
         
-        # loop until Raymarine Quantum is found
+        # loop until Raymarine Quantum is found 
         self.get_logger().info(f'Locating radar...')
-        while True:
-            data, senderaddr = locator_socket.recvfrom(1024)
-            self.get_logger().debug(f'received {len(data)} bytes from {senderaddr[0]}:{senderaddr[1]}')
-            if len(data) != 36: continue # ignore any packets not 36 bytes
+        # while True:
+        #     data, senderaddr = locator_socket.recvfrom(1024)
+        #     self.get_logger().debug(f'received {len(data)} bytes from {senderaddr[0]}:{senderaddr[1]}')
+        #     if len(data) != 36: continue # ignore any packets not 36 bytes
             
-            quantum_location = LocationInfo(*LocationInfo.parse(data))
-            self.get_logger().debug(f'{quantum_location=}')
-            if quantum_location.model_id != quantum_model_id: continue
+        #     quantum_location = LocationInfo(*LocationInfo.parse(data))
+        #     self.get_logger().debug(f'{quantum_location=}')
+        #     if quantum_location.model_id != quantum_model_id: continue
             
-            self.get_logger().info(f'Found radar at {quantum_location.radar_ip}')
-            break
+        #     self.get_logger().info(f'Found radar at {quantum_location.radar_ip}')
+        #     break
         
+        ###NOTE: IP IS PROBABLY 10.42.0.253, PORT IS PROBABLY 2575
+        # This information is probably static given current setup, if changes happen, use the while loop above to recollect the correct location info
+        # Also, on first launch, having this info will still not allow commands to be issued until the Raymarine radar sends the location info packet anyway
+        # This is mostly to help with quickly reconnecting when rebooting the node.
+        quantum_location = LocationInfo(field1=0, field2=3414199186, model_id=40, field3=0, field4=0, field5=6553603, field6=1050630, data_ip='232.1.179.1', data_port=2574, radar_ip='10.42.0.253', radar_port=2575)
+        self.get_logger().info(f'Found radar at {quantum_location.radar_ip}')
+
         self.get_logger().info(f'Closing locator socket')
         locator_socket.close()
         return quantum_location
