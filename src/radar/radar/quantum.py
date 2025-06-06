@@ -3,6 +3,8 @@ import struct
 import numpy as np
 import cv2
 from cv_bridge import CvBridge
+import time
+import os
 
 import rclpy
 from rclpy.node import Node
@@ -19,6 +21,9 @@ from radar.packets.rmr_report import RMReport
 from radar.packets.quantum_scan import QuantumScan
 from radar.packets.quantum_report import QuantumReport
 import radar.filter as RadarFilter
+
+#testing values
+PREV_SPOKE = 0
 
 MAX_SPOKE_LENGTH = 256
 DEFAULT_NUM_SPOKES = 250
@@ -58,11 +63,18 @@ class Qauntum(Node):
             1, 
             self.standby_timer_callback, 
             command_mutex_callback_group_)
-        # request polar image every 2.5 second
-        self.polar_image_timer = self.create_timer(
-            2.5, 
-            self.imager_callback, 
-            reentrant_callback_group)
+        # request polar image every 2.5 second (2.65 to compensate for lag)
+        # self.polar_image_timer = self.create_timer(
+        #     2.55, 
+        #     self.imager_callback, 
+        #     reentrant_callback_group)
+        
+        # request full scan in string form every 2.5 seconds
+        # self.scan_string_timer = self.create_timer(
+        #     2.55, 
+        #     self.scan_string_callback, 
+        #     reentrant_callback_group)
+
         # request data from radar asap
         self.data_timer = self.create_timer(
             0, 
@@ -84,7 +96,19 @@ class Qauntum(Node):
             '/USV/Polar', 
             10, 
             callback_group=reentrant_callback_group)
+
+        self.spoke_pub = self.create_publisher(
+            String, 
+            'radar_spoke', 
+            10,
+            callback_group=reentrant_callback_group)
         
+        self.scan_string_pub = self.create_publisher(
+            String, 
+            'radar_scan_str', 
+            10,
+            callback_group=reentrant_callback_group)
+
         self.diagnostic_pub = self.create_publisher(
             String, 
             'diagnostic_status', 
@@ -97,6 +121,12 @@ class Qauntum(Node):
             self.radar_control_callback,
             10,
             callback_group=command_mutex_callback_group_)
+        
+        self.imu_subscription = self.create_subscription(
+            String,
+            'imu_handler_data',
+            self.process_imu_input,
+            10)
     
         self.alive_counter = 0
         self.num_spokes = DEFAULT_NUM_SPOKES
@@ -106,6 +136,16 @@ class Qauntum(Node):
         self.bridge = CvBridge()
         self.scanning = False
 
+        self.imu_input = ''
+
+        self.scan_str = ''
+
+        ### TIMER FOR IMU ONLY, COMMENT OUT WHEN IN NORMAL OPERATION
+
+        # self.imu_timer = self.create_timer(
+        #     0.01, 
+        #     self.send_imu_only, 
+        #     reentrant_callback_group)
 
     def locate_quantum(self, multicast_group='224.0.0.1', multicast_port=5800, quantum_model_id=40) -> LocationInfo:
         # Create UDP socket
@@ -118,6 +158,11 @@ class Qauntum(Node):
         
         # Tell the operating system to add the socket to the multicast group
         # on all interfaces.
+        
+        # Bind socket to proper network interface
+        #locator_socket.setsockopt(socket.SOL_SOCKET, 25, 'enxa0cec8b67b9f')
+        
+        
         mreq = struct.pack('4sL', socket.inet_aton(multicast_group), socket.INADDR_ANY)
         locator_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         self.get_logger().info(f'Initialized locator socket')
@@ -301,17 +346,32 @@ class Qauntum(Node):
         rmr = RMReport(*bl)
         self.get_logger().debug(f'{rmr}')
 
+    def process_imu_input(self, msg):
+        self.imu_input = msg.data
 
-    def process_quantum_scan_data(self, data: bytes):
+    def process_quantum_scan_data(self, data: bytes): #SENDS RADAR SPOKES, COMMENT OUT THIS FUNCTION FOR IMU TESTING
+        
+        global PREV_SPOKE
+        
         if len(data) < 20: return # ensure packet is longer than 20 bytes
         
         qheader = QuantumScan.parse_header(data[:20])
         qdata = QuantumScan.parse_data(data[20:])
         qs = QuantumScan(*qheader, qdata)
+        
+        # f = open("/home/ws/test/slam_radar_test/radar_data.txt", "a") 
+        # f.write(f'[{time.time()}]\tQ_Header<{qheader}>\tQ_Data<{qdata}>\t{self.imu_input}\n')
+        spoke_string = f'[{time.time()}]\tQ_Header<{qheader}>\tQ_Data<{qdata}>\t{self.imu_input}\n'
+        self.scan_str += spoke_string
+
+        ##Uncomment below to use spoke string publisher##
+        msg = String()
+        msg.data = spoke_string
+        self.spoke_pub.publish(msg)
+
         self.get_logger().debug(f'{qs}')
         
         if self.spokes is None: return
-
         self.num_spokes = qs.num_spokes
         # Quantum Q24C spokes are 180 degrees out of phase
         # i.e. 0th azimuth points towards the **back** of the radar
@@ -320,12 +380,29 @@ class Qauntum(Node):
         self.spokes_updated += 1
         self.get_logger().debug(f'Received spoke #{qs.azimuth} ({self.spokes_updated}/{self.num_spokes})')
         
+        #if qs.azimuth != ((PREV_SPOKE+1) % DEFAULT_NUM_SPOKES):
+            #print("SPOKE SEQUENCE MISMATCH! " + str(qs.azimuth) + " " + str(PREV_SPOKE) + "\n")
+        
+        #PREV_SPOKE = qs.azimuth
+        
         # msg = Spoke()
         # msg.azimuth = qs.azimuth
         # msg.data = qs.data
         # self.spoke_publisher.publish(msg)
         # self.get_logger().debug(f'published {msg=}')
 
+    # def process_quantum_scan_data(self, data: bytes): # PLACEHOLDER FOR IMU TESTING, COMMENT FOR NORMAL OPERATION
+    #     pass  
+
+
+    # Function that generates a dummy spoke to send live IMU only
+    def send_imu_only(self):
+        dummy_header = f'(2621443, 15728, 257, 173, 250, 8, 58, 64, 34)'
+        dummy_data= f'(0, 0, 0, 80, 61, 76, 35, 77, 0, 77, 0, 0, 0, 0, 0, 0, 14, 58, 91, 49, 55, 53, 11, 15, 41, 0, 21, 28, 0, 0, 36, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)'
+        dummy_spoke = f'[{time.time()}]\tQ_Header<{dummy_header}>\tQ_Data<{dummy_data}>\t{self.imu_input}\n'
+        msg = String()
+        msg.data = dummy_spoke
+        self.spoke_pub.publish(msg)
 
     def process_quantum_report(self, data: bytes):
         if len(data) < 260: return # ensure packet is longer than 260 bytes
@@ -339,9 +416,14 @@ class Qauntum(Node):
 
 
     def imager_callback(self):
-        polar_image = np.copy(self.spokes/MAX_INTENSITY * 255).astype(np.uint8)
-        cv2.imwrite('test/polar_image.jpg', polar_image)
-        
+        #if self.spokes_updated < 250:
+        #    return
+        #print(f'imager_callback spokes_updated before: {self.spokes_updated}')
+        #polar_image = np.copy(self.spokes/MAX_INTENSITY * 255).astype(np.uint8)
+        polar_image = np.copy(self.spokes).astype(np.uint8)
+        #cv2.imwrite('test/polar_image.jpg', polar_image)
+        #cv2.imwrite(f'test/slam_radar_test/polar/polar_{time.time()}.jpg', polar_image)
+
         self.polar_image_publisher.publish(self.bridge.cv2_to_imgmsg(polar_image, encoding="passthrough"))
         
         I, D, P = RadarFilter.generate_map(r=polar_image, k=None, p=None, K=None, area_threshold=50, gamma=None)
@@ -352,8 +434,17 @@ class Qauntum(Node):
         self.get_logger().info(f'Published images (updated {self.spokes_updated} spokes at zoom level {self.range_index})')
         
         self.spokes = np.zeros((self.num_spokes, MAX_SPOKE_LENGTH), np.uint8)
+        #self.spokes = np.full((self.num_spokes, 96), 255)
         self.spokes_updated = 0
 
+    def scan_string_callback(self):
+        # uncomment below to enable whole scan string publisher
+        pass
+        #msg = String()
+        #msg.data = self.scan_str
+
+        #self.scan_string_pub.publish(msg)
+        #self.scan_str = ''
 
     def radar_control_callback(self, msg):
         match msg.data:

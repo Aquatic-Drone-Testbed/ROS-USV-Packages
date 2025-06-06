@@ -18,14 +18,19 @@ from rclpy.qos import QoSDurabilityPolicy
 from cv_bridge import CvBridge
 from PIL import Image as PilImage
 
+import zlib
+import re
+
 class RadioServer(Node):
-    RADIO_TIMEOUT_SECONDS = 5
+    RADIO_TIMEOUT_SECONDS = 2.5
     USV_SERVER_PORT = 39000
     GPS_DATA_PORT = 39001
     VIDEO_STREAM_PORT = 39002
     RADAR_STREAM_PORT = 39003
+    LIDAR_STREAM_PORT = 39006
     DIAGNOSTIC_PORT = 39004
-    SLAM_PORT = 39005
+    SLAM_PORT = 39005 #Using this to send radar scan string data
+    SPOKE_PORT = 39007
     REQUEST_CONNECTION_STR = 'Ping'
     ACKNOWLEDGE_CONNECTION_STR = 'Pong'
         
@@ -39,11 +44,13 @@ class RadioServer(Node):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(('', self.port))
         self.sock.settimeout(RadioServer.RADIO_TIMEOUT_SECONDS)
-        
+
         self.get_logger().info(f"Radio server listening on UDP port {self.port}...")
         
         reentrant_callback_group = ReentrantCallbackGroup()
         mutex_callback_group = MutuallyExclusiveCallbackGroup()
+
+        self.last_spoke = -1
         
         # Adjust these topic names and types according to your actual topics and data types
         gps_data_qos = video_stream_qos = QoSProfile(
@@ -75,6 +82,11 @@ class RadioServer(Node):
             "radar_control", 
             10,
             callback_group=reentrant_callback_group)
+        self.navmod_control_publisher = self.create_publisher(
+            String, 
+            "navmod_control", 
+            10,
+            callback_group=reentrant_callback_group)
         
         # subscribers
         self.create_subscription(
@@ -90,10 +102,28 @@ class RadioServer(Node):
             video_stream_qos,
             callback_group=reentrant_callback_group)
         self.create_subscription(
+            Image, 
+            'lidar_image', 
+            self.lidar_stream_callback, 
+            video_stream_qos,
+            callback_group=reentrant_callback_group)
+        self.create_subscription(
             NavSatFix, 
             'gps_data', 
             self.gps_data_callback, 
             gps_data_qos,
+            callback_group=reentrant_callback_group)
+        self.create_subscription(
+            String, 
+            'radar_spoke', 
+            self.radar_spoke_callback, 
+            10,
+            callback_group=reentrant_callback_group)
+        self.create_subscription(
+            String, 
+            'radar_scan_str', 
+            self.radar_scan_callback, 
+            10,
             callback_group=reentrant_callback_group)
         self.create_subscription(
             String, 
@@ -163,6 +193,10 @@ class RadioServer(Node):
                 elif data_value == "zoom_out":
                     msg.data = "zoom_out"
                 self.radar_control_publisher.publish(msg)
+            case "navmod":
+                if data_value == "toggle_navmod":
+                    msg.data = "toggle_navmod"
+                self.navmod_control_publisher.publish(msg)
             case _:
                 self.get_logger().error(f"Unknown data type: {data_type}")
 
@@ -178,24 +212,55 @@ class RadioServer(Node):
 
 
     def radar_stream_callback(self, msg: Image):
+        pass
+#        cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+#        pil_image = PilImage.fromarray(cv_image)
+#        buffer = io.BytesIO()
+#        pil_image.save(buffer, format='JPEG', quality=80)
+#        compressed_img = buffer.getvalue()
+#        self.send_to_ctrl_station(compressed_img, RadioServer.RADAR_STREAM_PORT)
+
+
+    def lidar_stream_callback(self, msg: Image):
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
         pil_image = PilImage.fromarray(cv_image)
         buffer = io.BytesIO()
         pil_image.save(buffer, format='JPEG', quality=80)
         compressed_img = buffer.getvalue()
-        self.send_to_ctrl_station(compressed_img, RadioServer.RADAR_STREAM_PORT)
+        self.send_to_ctrl_station(compressed_img, RadioServer.LIDAR_STREAM_PORT)
 
 
     def gps_data_callback(self, msg: NavSatFix):
         gps_data = f"Latitude: {msg.latitude}, Longitude: {msg.longitude}, Altitude: {msg.altitude}".encode()
         self.send_to_ctrl_station(gps_data, RadioServer.GPS_DATA_PORT)
 
+    def radar_spoke_callback(self, msg: String):
+        match = re.search(r'Q_Header<\((.*?)\)>',msg.data)
+        if match: 
+            q_header = match.group(1)
+            elements = [x for x in q_header.split(',')]
+            if int(elements[7]) != self.last_spoke+1 and int(elements[7]) != 0 and int(elements[7]) != self.last_spoke:
+                print(f'Dropped Spoke! Last: {self.last_spoke} Current: {int(elements[7])}')
+            self.last_spoke = int(elements[7])
+        
+        #radar_spoke_data = zlib.compress(msg.data.encode())
+        radar_spoke_data = msg.data.encode()
+        self.get_logger().debug(f'Sent {msg} to station via port {RadioServer.SPOKE_PORT}')
+        #print("SENT SPOKE")
+        self.send_to_ctrl_station(radar_spoke_data, RadioServer.SPOKE_PORT)
+
+    def radar_scan_callback(self, msg: String):
+        pass
+        #uncomment to send full radar scans (note: currently packets too large)
+        #radar_scan_data = msg.data.encode()
+        #self.get_logger().debug(f'Sent {msg} to station via port {RadioServer.SLAM_PORT}')
+        #self.send_to_ctrl_station(radar_scan_data, RadioServer.SLAM_PORT)
 
     def diagnostics_callback(self, msg: String):
         diagnostic_data = msg.data.encode()
+        #diagnostic_data = zlib.compress(msg.data.encode())
         self.get_logger().debug(f'Sent {msg} to station via port {RadioServer.DIAGNOSTIC_PORT}')
         self.send_to_ctrl_station(diagnostic_data, RadioServer.DIAGNOSTIC_PORT)
-
 
     def send_to_ctrl_station(self, data: bytes, port):
         if self.control_station_ip is None:

@@ -10,7 +10,9 @@ class VideoPublisher(Node):
     def __init__(self):
         super().__init__('video_publisher_node')
         # video_path = os.path.join(get_package_share_directory('video_stream'), 'resource', 'testvideo.mp4') # Stock video input
-        video_path = 0  # USB Camera Input
+        video_path = 0  # Realsense Depth Sensor
+        #video_path = 1  # Camera?
+
         self.video_capture = cv2.VideoCapture(video_path)
         fps = self.video_capture.get(cv2.CAP_PROP_FPS) or 30 # Default to 30 FPS if not available
 

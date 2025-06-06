@@ -23,6 +23,9 @@ setup(
             'quantum = radar.quantum:main',
             'slam = radar.slam:main',
             'test = radar.test:main',
+            'quantum_chain = radar.quantum_chain:main',
+            'quantum_keepalive = radar.quantum_keepalive:main',
+            'quantum_keepalive_chain = radar.quantum_keepalive_chain:main',
         ],
     },
 )
